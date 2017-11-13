@@ -31,13 +31,14 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
       if [ "unhealthy" = "$HEALTH" ]; then
         DATE=$(date +%d-%m-%Y" "%H:%M:%S)
         echo "$DATE Container ${CONTAINER:0:12} found to be unhealthy"
-        touch "$TMPDIR/$CONTAINER"
+        touch "$TMP_DIR/$CONTAINER"
       fi
     done
-    for CONTAINER in `ls $TMPDIR`; do 
+    for CONTAINER in `ls $TMP_DIR`; do 
         DATE=$(date +%d-%m-%Y" "%H:%M:%S)
         echo "$DATE Restarting container ${CONTAINER:0:12}"
-        curl -f --no-buffer -s -XPOST --unix-socket ${DOCKER_SOCK} http://localhost/containers/${CONTAINER}/restart && rm "$TMPDIR/$CONTAINER" || echo "$DATE Restarting container ${CONTAINER:0:12} failed"
+        curl -f --no-buffer -s -XPOST --unix-socket ${DOCKER_SOCK} http://localhost/containers/${CONTAINER}/restart && rm "$TMP_DIR/$CONTAINER" || echo "$DATE Restarting container ${CONTAINER:0:12} failed"
+    done
   done
 
 else
