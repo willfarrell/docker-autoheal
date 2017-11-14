@@ -2,8 +2,11 @@
 set -e
 
 DOCKER_SOCK=/tmp/docker.sock
+TMP_DIR=/tmp/restart
 
 if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
+  
+  mkdir $TMP_DIR
 
   # https://docs.docker.com/engine/api/v1.25/
 
@@ -27,13 +30,15 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
       HEALTH=$(curl --no-buffer -s -XGET --unix-socket ${DOCKER_SOCK} http://localhost/containers/${CONTAINER}/json | jq -r .State.Health.Status)
       if [ "unhealthy" = "$HEALTH" ]; then
         DATE=$(date +%d-%m-%Y" "%H:%M:%S)
-        echo "$DATE Container ${CONTAINER:0:12} found to be unhealthy. Restarting container ..."
-        # Note: kill and stop didn't honor the restart policy
-        #curl --no-buffer -s -XPOST --data '{"signal":"SIGKILL"}' --unix-socket ${DOCKER_SOCK} http://localhost/containers/${CONTAINER}/kill
-        curl --no-buffer -s -XPOST --unix-socket ${DOCKER_SOCK} http://localhost/containers/${CONTAINER}/restart
+        echo "$DATE Container ${CONTAINER:0:12} found to be unhealthy"
+        touch "$TMP_DIR/$CONTAINER"
       fi
     done
-
+    for CONTAINER in `ls $TMP_DIR`; do 
+        DATE=$(date +%d-%m-%Y" "%H:%M:%S)
+        echo "$DATE Restarting container ${CONTAINER:0:12}"
+        curl -f --no-buffer -s -XPOST --unix-socket ${DOCKER_SOCK} http://localhost/containers/${CONTAINER}/restart && rm "$TMP_DIR/$CONTAINER" || echo "$DATE Restarting container ${CONTAINER:0:12} failed"
+    done
   done
 
 else
