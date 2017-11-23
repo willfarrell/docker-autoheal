@@ -22,6 +22,7 @@ Note: You must apply `HEALTHCHECK` to your docker images first. See https://docs
 ```
 AUTOHEAL_CONTAINER_LABEL=autoheal
 AUTOHEAL_INTERVAL=5
+DOCKER_SOCK=/var/run/docker.sock
 ```
 
 ## Testing
@@ -30,6 +31,6 @@ docker build -t autoheal .
 
 docker run -d \
     -e AUTOHEAL_CONTAINER_LABEL=all \
-    -v /var/run/docker.sock:/tmp/docker.sock \
+    -v /var/run/docker.sock:/var/run/docker.sock \
     autoheal                                                                        
 ```
