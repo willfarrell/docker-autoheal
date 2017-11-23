@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-DOCKER_SOCK=/tmp/docker.sock
+DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 TMP_DIR=/tmp/restart
 
 if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
