@@ -6,7 +6,7 @@ TMP_DIR=/tmp/restart
 
 if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
   
-  mkdir $TMP_DIR
+  mkdir -p $TMP_DIR
 
   # https://docs.docker.com/engine/api/v1.25/
 
