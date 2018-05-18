@@ -3,10 +3,15 @@ set -e
 
 DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 TMP_DIR=/tmp/restart
+CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 
 # SIGTERM-handler
 term_handler() {
   exit 143; # 128 + 15 -- SIGTERM
+}
+
+docker_curl() {
+  curl --max-time "${CURL_TIMEOUT}" --no-buffer -s --unix-socket "${DOCKER_SOCK}" "$@"
 }
 
 trap 'kill ${!}; term_handler' SIGTERM
@@ -32,21 +37,21 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
   while true; do
     sleep ${AUTOHEAL_INTERVAL:=5}
 
-    CONTAINERS=$(curl --no-buffer -s -XGET --unix-socket ${DOCKER_SOCK} http://localhost/containers/json | selector)
+    CONTAINERS=$(docker_curl -XGET http://localhost/containers/json | selector)
     for CONTAINER in $CONTAINERS; do
-      HEALTH=$(curl --no-buffer -s -XGET --unix-socket ${DOCKER_SOCK} http://localhost/containers/${CONTAINER}/json | jq -r .State.Health.Status)
+      HEALTH=$(docker_curl -XGET http://localhost/containers/${CONTAINER}/json | jq -r .State.Health.Status)
       if [ "unhealthy" = "$HEALTH" ]; then
         DATE=$(date +%d-%m-%Y" "%H:%M:%S)
-        CONTAINER_NAME=$(curl --no-buffer -s -XGET --unix-socket ${DOCKER_SOCK} http://localhost/containers/${CONTAINER}/json | jq -r .Name)
+        CONTAINER_NAME=$(docker_curl -XGET http://localhost/containers/${CONTAINER}/json | jq -r .Name)
         echo "$DATE Container ${CONTAINER_NAME} (${CONTAINER:0:12}) found to be unhealthy"
         touch "$TMP_DIR/$CONTAINER"
       fi
     done
     for CONTAINER in `ls $TMP_DIR`; do 
         DATE=$(date +%d-%m-%Y" "%H:%M:%S)
-        CONTAINER_NAME=$(curl --no-buffer -s -XGET --unix-socket ${DOCKER_SOCK} http://localhost/containers/${CONTAINER}/json | jq -r .Name)
+        CONTAINER_NAME=$(docker_curl -XGET http://localhost/containers/${CONTAINER}/json | jq -r .Name)
         echo "$DATE Restarting container ${CONTAINER_NAME} (${CONTAINER:0:12})"
-        curl -f --no-buffer -s -XPOST --unix-socket ${DOCKER_SOCK} http://localhost/containers/${CONTAINER}/restart && rm "$TMP_DIR/$CONTAINER" || echo "$DATE Restarting container ${CONTAINER:0:12} failed"
+        docker_curl -f -XPOST http://localhost/containers/${CONTAINER}/restart && rm "$TMP_DIR/$CONTAINER" || echo "$DATE Restarting container ${CONTAINER:0:12} failed"
     done
   done
 
