@@ -51,7 +51,7 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
         DATE=$(date +%d-%m-%Y" "%H:%M:%S)
         CONTAINER_NAME=$(docker_curl -XGET http://localhost/containers/${CONTAINER}/json | jq -r .Name)
         echo "$DATE Restarting container ${CONTAINER_NAME} (${CONTAINER:0:12})"
-        docker_curl -XPOST http://localhost/containers/${CONTAINER}/restart && rm "$TMP_DIR/$CONTAINER" || echo "$DATE Restarting container ${CONTAINER:0:12} failed"
+        docker_curl -f -XPOST http://localhost/containers/${CONTAINER}/restart && rm "$TMP_DIR/$CONTAINER" || echo "$DATE Restarting container ${CONTAINER:0:12} failed"
     done
   done
 
