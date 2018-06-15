@@ -50,8 +50,13 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
     for CONTAINER in `ls $TMP_DIR`; do 
         DATE=$(date +%d-%m-%Y" "%H:%M:%S)
         CONTAINER_NAME=$(docker_curl -XGET http://localhost/containers/${CONTAINER}/json | jq -r .Name)
-        echo "$DATE Restarting container ${CONTAINER_NAME} (${CONTAINER:0:12})"
-        docker_curl -f -XPOST http://localhost/containers/${CONTAINER}/restart && rm "$TMP_DIR/$CONTAINER" || echo "$DATE Restarting container ${CONTAINER:0:12} failed"
+        if [ "null" = "$CONTAINER_NAME" ]; then
+          echo "$DATE Delete container ${CONTAINER_NAME} (${CONTAINER:0:12}) from restart list because container name null implies container is not exists"
+          rm "$TMP_DIR/$CONTAINER"
+        else
+          echo "$DATE Restarting container ${CONTAINER_NAME} (${CONTAINER:0:12})"
+          docker_curl -f -XPOST http://localhost/containers/${CONTAINER}/restart && rm "$TMP_DIR/$CONTAINER" || echo "$DATE Restarting container ${CONTAINER:0:12} failed"
+        fi
     done
   done
 
