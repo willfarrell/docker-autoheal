@@ -21,4 +21,4 @@ before_install:
   - cat ~/.docker/config.json
 
 script:
-  - bash build.sh $TRAVIS_REPO_SLUG $DOCKER_USERNAME $DOCKER_PASSWORD
+  - bash build.sh $TRAVIS_REPO_SLUG $DOCKER_USERNAME $DOCKER_PASSWORD index.docker.io

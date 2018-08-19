@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 
 REPO=${1}
 DOCKER_USERNAME=${2}
 DOCKER_PASSWORD=${3}
+DOCKER_REGESTRY=${4}
 declare -A ARCH_MAP
 ARCH_MAP[amd64]=amd64
 ARCH_MAP[armhf]=arm
