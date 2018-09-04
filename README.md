@@ -10,6 +10,14 @@ This container is a stand-in till there is native support for `--exit-on-unhealt
 [![](https://images.microbadger.com/badges/version/willfarrell/autoheal.svg)](http://microbadger.com/images/willfarrell/autoheal "Get your own version badge on microbadger.com")  [![](https://images.microbadger.com/badges/image/willfarrell/autoheal.svg)](http://microbadger.com/images/willfarrell/autoheal "Get your own image badge on microbadger.com")
 
 ## How to use
+```bash
+docker run -d \
+    --name autoheal \
+    --restart=always \
+    -e AUTOHEAL_CONTAINER_LABEL=all \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    willfarrell/autoheal
+```
 a) Apply the label `autoheal=true` to your container to have it watched.
 
 b) Set ENV `AUTOHEAL_CONTAINER_LABEL=all` to watch all running containers. 
