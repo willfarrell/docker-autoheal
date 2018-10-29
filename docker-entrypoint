@@ -2,7 +2,6 @@
 set -e
 
 DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
-TMP_DIR=/tmp/restart
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 
 # SIGTERM-handler
