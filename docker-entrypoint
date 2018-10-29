@@ -18,44 +18,29 @@ trap 'kill ${!}; term_handler' SIGTERM
 
 if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
   
-  mkdir -p $TMP_DIR
-
   # https://docs.docker.com/engine/api/v1.25/
 
   # Set container selector
   if [ "$AUTOHEAL_CONTAINER_LABEL" == "all" ]; then
-    selector() {
-      jq -r .[].Id
-    }
+    labelFilter=""
   else
-    selector() {
-      jq -r '.[] | select(.Labels["'${AUTOHEAL_CONTAINER_LABEL:=autoheal}'"] == "true") | .Id'
-    }
+    labelFilter=",\"label\":\[\"${AUTOHEAL_CONTAINER_LABEL:=autoheal}=true\"\]"
   fi
 
   echo "Monitoring containers for unhealthy status"
   while true; do
     sleep ${AUTOHEAL_INTERVAL:=5}
-
-    CONTAINERS=$(docker_curl -XGET http://localhost/containers/json | selector)
-    for CONTAINER in $CONTAINERS; do
-      HEALTH=$(docker_curl -XGET http://localhost/containers/${CONTAINER}/json | jq -r .State.Health.Status)
-      if [ "unhealthy" = "$HEALTH" ]; then
+    
+    apiUrl="http://localhost/containers/json?filters=\{\"health\":\[\"unhealthy\"\]${labelFilter}\}"
+    docker_curl "$apiUrl" | jq -r 'foreach .[] as $CONTAINER([];[]; $CONTAINER | .Id, .Names[0])' | \
+    while read -r CONTAINER_ID && read -r CONTAINER_NAME; do
+        CONTAINER_SHORT_ID=${CONTAINER_ID:0:12}
         DATE=$(date +%d-%m-%Y" "%H:%M:%S)
-        CONTAINER_NAME=$(docker_curl -XGET http://localhost/containers/${CONTAINER}/json | jq -r .Name)
-        echo "$DATE Container ${CONTAINER_NAME} (${CONTAINER:0:12}) found to be unhealthy"
-        touch "$TMP_DIR/$CONTAINER"
-      fi
-    done
-    for CONTAINER in `ls $TMP_DIR`; do 
-        DATE=$(date +%d-%m-%Y" "%H:%M:%S)
-        CONTAINER_NAME=$(docker_curl -XGET http://localhost/containers/${CONTAINER}/json | jq -r .Name)
         if [ "null" = "$CONTAINER_NAME" ]; then
-          echo "$DATE Delete container ${CONTAINER_NAME} (${CONTAINER:0:12}) from restart list because container name null implies container does not exist"
-          rm "$TMP_DIR/$CONTAINER"
+          echo "$DATE Container name of ($CONTAINER_SHORT_ID) is null, which implies container does not exist - don't restart"
         else
-          echo "$DATE Restarting container ${CONTAINER_NAME} (${CONTAINER:0:12})"
-          docker_curl -f -XPOST http://localhost/containers/${CONTAINER}/restart && rm "$TMP_DIR/$CONTAINER" || echo "$DATE Restarting container ${CONTAINER:0:12} failed"
+          echo "$DATE Container ${CONTAINER_NAME} ($CONTAINER_SHORT_ID) found to be unhealthy - Restarting container now"
+          docker_curl -f -XPOST http://localhost/containers/${CONTAINER_ID}/restart || echo "$DATE Restarting container $CONTAINER_SHORT_ID failed"
         fi
     done
   done
