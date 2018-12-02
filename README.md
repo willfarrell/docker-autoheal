@@ -29,7 +29,7 @@ Note: You must apply `HEALTHCHECK` to your docker images first. See https://docs
 ## ENV Defaults
 ```
 AUTOHEAL_CONTAINER_LABEL=autoheal
-AUTOHEAL_INTERVAL=5
+AUTOHEAL_INTERVAL=5   # check every 5 seconds
 DOCKER_SOCK=/var/run/docker.sock
 ```
 
