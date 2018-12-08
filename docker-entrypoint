@@ -33,7 +33,9 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
     }
   fi
 
-  echo "Monitoring containers for unhealthy status"
+  echo "Monitoring containers for unhealthy status in ${AUTOHEAL_START_PERIOD} second(s)"
+  sleep ${AUTOHEAL_START_PERIOD:=0}
+
   while true; do
     sleep ${AUTOHEAL_INTERVAL:=5}
 
