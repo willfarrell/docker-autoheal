@@ -24,12 +24,13 @@ b) Set ENV `AUTOHEAL_CONTAINER_LABEL=all` to watch all running containers.
 
 c) Set ENV `AUTOHEAL_CONTAINER_LABEL` to existing label name that has the value `true`.
 
-Note: You must apply `HEALTHCHECK` to your docker images first. See https://docs.docker.com/engine/reference/builder/#/healthcheck for details.
+Note: You must apply `HEALTHCHECK` to your docker images first. See https://docs.docker.com/engine/reference/builder/#healthcheck for details.
 
 ## ENV Defaults
 ```
 AUTOHEAL_CONTAINER_LABEL=autoheal
 AUTOHEAL_INTERVAL=5   # check every 5 seconds
+AUTOHEAL_START_PERIOD=0   # wait 0 second before first health check
 DOCKER_SOCK=/var/run/docker.sock
 ```
 
