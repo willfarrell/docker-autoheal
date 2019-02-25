@@ -1,7 +1,7 @@
 # docker-autoheal
 
 Monitor and restart unhealthy docker containers. 
-This functionality was propose to be included with the addition of `HEALTHCHECK`, however didn't make the cut.
+This functionality was proposed to be included with the addition of `HEALTHCHECK`, however didn't make the cut.
 This container is a stand-in till there is native support for `--exit-on-unhealthy` https://github.com/docker/docker/pull/22719.
 
 ## Supported tags and Dockerfile links
@@ -30,8 +30,15 @@ Note: You must apply `HEALTHCHECK` to your docker images first. See https://docs
 ```
 AUTOHEAL_CONTAINER_LABEL=autoheal
 AUTOHEAL_INTERVAL=5   # check every 5 seconds
-AUTOHEAL_START_PERIOD=0   # wait 0 second before first health check
-DOCKER_SOCK=/var/run/docker.sock
+AUTOHEAL_START_PERIOD=0   # wait 0 seconds before first health check
+AUTOHEAL_DEFAULT_STOP_TIMEOUT=10   # Docker waits max 10 seconds (the Docker default) for a container to stop before killing during restarts (container overridable via label, see below)
+DOCKER_SOCK=/var/run/docker.sock   # Unix socket for curl requests to Docker API
+CURL_TIMEOUT=30     # --max-time seconds for curl requests to Docker API
+```
+
+### Optional Container Labels
+```
+autoheal.stop.timeout=20        # Per containers override for stop timeout seconds during restart
 ```
 
 ## Testing
