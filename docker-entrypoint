@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
+
 set -e
+set -o pipefail
 
 DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
