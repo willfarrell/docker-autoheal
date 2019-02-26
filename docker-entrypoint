@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
+
 set -e
+set -o pipefail
 
 DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
@@ -26,8 +28,9 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
     labelFilter=",\"label\":\[\"${AUTOHEAL_CONTAINER_LABEL:=autoheal}=true\"\]"
   fi
 
-  echo "Monitoring containers for unhealthy status in ${AUTOHEAL_START_PERIOD:=0} second(s)"
-  sleep ${AUTOHEAL_START_PERIOD:=0}
+  AUTOHEAL_START_PERIOD=${AUTOHEAL_START_PERIOD:=0}
+  echo "Monitoring containers for unhealthy status in ${AUTOHEAL_START_PERIOD} second(s)"
+  sleep ${AUTOHEAL_START_PERIOD}
 
   while true; do
     sleep ${AUTOHEAL_INTERVAL:=5}
