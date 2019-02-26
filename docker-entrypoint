@@ -36,15 +36,18 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
     sleep ${AUTOHEAL_INTERVAL:=5}
     
     apiUrl="http://localhost/containers/json?filters=\{\"health\":\[\"unhealthy\"\]${labelFilter}\}"
-    docker_curl "$apiUrl" | jq -r 'foreach .[] as $CONTAINER([];[]; $CONTAINER | .Id, .Names[0])' | \
-    while read -r CONTAINER_ID && read -r CONTAINER_NAME; do
+    stopTimeout=".Labels[\"autoheal.stop.timeout\"] // ${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}"
+    docker_curl "$apiUrl" | \
+    jq -r "foreach .[] as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0], $stopTimeout )" | \
+    while read -r CONTAINER_ID && read -r CONTAINER_NAME && read -r TIMEOUT; do
         CONTAINER_SHORT_ID=${CONTAINER_ID:0:12}
         DATE=$(date +%d-%m-%Y" "%H:%M:%S)
         if [ "null" = "$CONTAINER_NAME" ]; then
           echo "$DATE Container name of ($CONTAINER_SHORT_ID) is null, which implies container does not exist - don't restart"
         else
-          echo "$DATE Container ${CONTAINER_NAME} ($CONTAINER_SHORT_ID) found to be unhealthy - Restarting container now"
-          docker_curl -f -XPOST http://localhost/containers/${CONTAINER_ID}/restart || echo "$DATE Restarting container $CONTAINER_SHORT_ID failed"
+          echo "$DATE Container ${CONTAINER_NAME} ($CONTAINER_SHORT_ID) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout"
+          docker_curl -f -XPOST "http://localhost/containers/${CONTAINER_ID}/restart?t=${TIMEOUT}" \
+            || echo "$DATE Restarting container $CONTAINER_SHORT_ID failed"
         fi
     done
   done
