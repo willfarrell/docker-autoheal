@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+set -e
+
+if [ "$1" = 'unhealthy' ]; then
+
+  echo "1" > /healthy
+  echo "healthy"
+
+  sleep 10
+
+  rm /healthy
+  echo "unhealthy"
+
+  sleep 300
+
+else
+  exec "$@"
+fi
