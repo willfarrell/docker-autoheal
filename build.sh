@@ -6,8 +6,8 @@ DOCKER_PASSWORD=${3}
 DOCKER_REGESTRY=${4}
 declare -A ARCH_MAP
 ARCH_MAP[x86_64]=x86_64
-ARCH_MAP[armhf]=arm
-ARCH_MAP[arm64]=arm64
+ARCH_MAP[arm32v6]=arm
+ARCH_MAP[arm64v8]=arm64
 
 docker run --rm --privileged multiarch/qemu-user-static:register --reset
 echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
@@ -33,4 +33,4 @@ for arch in "${ARCH_MAP[@]}"; do
   docker manifest annotate --os linux --arch ${arch} ${REPO}:latest ${REPO}-${arch}:latest;
 done;
 
-docker manifest push ${REPO}:latest 
+docker manifest push ${REPO}:latest

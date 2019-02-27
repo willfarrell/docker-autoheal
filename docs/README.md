@@ -1,11 +1,10 @@
 # docker-autoheal
 
 Monitor and restart unhealthy docker containers. 
-This functionality was proposed to be included with the addition of `HEALTHCHECK`, however didn't make the cut.
+This functionality was proposed to be included with the addition of `HEALTHCHECK`, however it didn't make the cut.
 This container is a stand-in till there is native support for `--exit-on-unhealthy` https://github.com/docker/docker/pull/22719.
 
 [![](https://img.shields.io/docker/pulls/willfarrell/autoheal.svg)](https://hub.docker.com/r/willfarrell/autoheal)  [![](https://images.microbadger.com/badges/image/willfarrell/autoheal.svg)](http://microbadger.com/images/willfarrell/autoheal)
-
 
 ## Supported tags and Dockerfile links
 - [`1.0.0`,`1.0`,`1`,`latest` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/master/Dockerfile)
@@ -16,7 +15,7 @@ This container is a stand-in till there is native support for `--exit-on-unhealt
 - [`1.0.0-i386`,`1.0-i386`,`1-i386`,`i386` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/master/Dockerfile)
 - [`1.0.0-ppc64le`,`1.0-ppc64le`,`1-ppc64le`,`ppc64le` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/master/Dockerfile)
 
-## How to use
+## Getting Started
 a) Apply the label `autoheal=true` to your container to have it watched.
 
 ```bash
@@ -92,3 +91,35 @@ docker run --rm -d --name autoheal \
 docker build -t unhealthy ./test  
 docker run --rm -d --name unhealthy --label autoheal=true unhealthy 
 ```
+
+## Building Multi-Arch
+```bash
+jet steps
+```
+
+## Built With
+- [Docker](https://www.docker.com/)
+
+## Contributing
+
+Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
+
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/willfarrell/autoheal/tags). 
+
+## Authors
+
+* **will Farrell** - *Initial work* - [willfarrell](https://github.com/willfarrell)
+
+See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+
+## Acknowledgments
+
+* Hat tip to anyone whose code was used
+* Inspiration
+* etc
