@@ -8,7 +8,7 @@ ARG arch=library
 # arm64v8
 # armhf -> DEPRECATED -> arm32v6 or arm32v7
 # i386
-# s390x
+# s390x -> ERROR
 # ppc64le
 # x86 - None
 # x86_64 == library
