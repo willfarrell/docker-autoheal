@@ -1,0 +1,45 @@
+- name: Setup
+  type: serial
+  service: base
+  steps:
+    - command: setup-env
+
+- name: Setup Docker
+  type: serial
+  service: docker
+  steps:
+    - command: docker-env-check
+    - command: docker-auth
+
+- name: Build Docker Images
+  type: parallel
+  service: docker
+  steps:
+    - name: x86_64
+      command: docker-build willfarrell/autoheal --build-arg arch=library --suffix -x86_64
+    - name: amd64
+      command: docker-build willfarrell/autoheal --build-arg arch=amd64 --suffix -amd64
+    - name: arm32v6
+      command: docker-build willfarrell/autoheal --build-arg arch=arm32v6 --suffix -arm32v6
+    - name: arm64v8
+      command: docker-build willfarrell/autoheal --build-arg arch=arm64v8 --suffix -arm64v8
+    - name: i386
+      command: docker-build willfarrell/autoheal --build-arg arch=i386 --suffix -i386
+    - name: ppc64le
+      command: docker-build willfarrell/autoheal --build-arg arch=ppc64le --suffix -ppc64le
+    # TODO resolve: standard_init_linux.go:207: exec user process caused "exec format error"
+    #- name: s390x
+    #  command: docker-build willfarrell/autoheal --build-arg arch=s390x --suffix -s390x
+
+- name: Build latest Docker
+  type: serial
+  service: docker
+  steps:
+    - name: latest
+      command: docker-build willfarrell/autoheal --build-arg arch=library
+
+- name: Push Docker Images
+  type: parallel
+  service: docker
+  steps:
+    - command: docker-push willfarrell/autoheal

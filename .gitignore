@@ -1,5 +1,12 @@
 
+codeship.aes
+env*
+!*.encrypted
+.tmp
 
 # IDE
 .idea
 *.iml
+
+# OS
+.DS_Store

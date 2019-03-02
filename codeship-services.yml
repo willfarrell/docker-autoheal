@@ -1,0 +1,16 @@
+base:
+  image: willfarrell/codeship-base
+  cached: true
+  encrypted_env_file: env.encrypted
+  volumes:
+    - ./:/data
+
+docker:
+  image: willfarrell/codeship-docker
+  cached: true
+  env_file: .tmp/env
+  volumes_from:
+    - base
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - .tmp/.docker/:/root/.docker

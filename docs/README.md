@@ -1,4 +1,10 @@
-# docker-autoheal
+<h1 align="center">
+  <im src="https://raw.githubusercontent.com/willfarrell/docker-aautoheal/master/docs/img/header.png" alt="Dcoker Autoheal">
+  <br/>
+  Docker authoheal
+  <br/>
+  <br/>
+</h1>
 
 Monitor and restart unhealthy docker containers. 
 This functionality was proposed to be included with the addition of `HEALTHCHECK`, however it didn't make the cut.
@@ -15,6 +21,8 @@ This container is a stand-in till there is native support for `--exit-on-unhealt
 - [`1.0.0-i386`,`1.0-i386`,`1-i386`,`i386` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/master/Dockerfile)
 - [`1.0.0-ppc64le`,`1.0-ppc64le`,`1-ppc64le`,`ppc64le` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/master/Dockerfile)
 
+Additionally `${GIT_COMMIT_ID}-${ARCH}` are also tagged and available for use.
+
 ## Getting Started
 a) Apply the label `autoheal=true` to your container to have it watched.
 
@@ -23,7 +31,7 @@ docker run -d \
     --name autoheal \
     --restart=always \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    willfarrell/autoheal
+    willfarrell/autoheal:1.0
 
 docker run -d --name app \
     --label autoheal=true \
@@ -38,7 +46,7 @@ docker run -d \
     --restart=always \
     -e AUTOHEAL_CONTAINER_LABEL=all \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    willfarrell/autoheal
+    willfarrell/autoheal:1.0
     
 docker run -d --name app1 \
     --label autoheal=true
@@ -54,7 +62,7 @@ docker run -d \
     --restart=always \
     -e AUTOHEAL_CONTAINER_LABEL=production \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    willfarrell/autoheal
+    willfarrell/autoheal:1.0
     
 docker run -d --name app \
     --label production=true \
@@ -89,12 +97,7 @@ docker run --rm -d --name autoheal \
     autoheal                                                                       
   
 docker build -t unhealthy ./test  
-docker run --rm -d --name unhealthy --label autoheal=true unhealthy 
-```
-
-## Building Multi-Arch
-```bash
-jet steps
+docker run --rm -d --name unhealthy --label autoheal=true unhealthy
 ```
 
 ## Built With
