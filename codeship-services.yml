@@ -1,12 +1,12 @@
 base:
-  image: willfarrell/codeship-base
+  image: willfarrell/codeship-base:0.1.0
   cached: true
   encrypted_env_file: env.encrypted
   volumes:
     - ./:/data
 
 docker:
-  image: willfarrell/codeship-docker
+  image: willfarrell/codeship-docker:0.1.0
   cached: true
   env_file: .tmp/env
   volumes_from:

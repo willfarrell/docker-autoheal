@@ -15,19 +15,28 @@
   type: parallel
   service: docker
   steps:
-    - name: x86_64
-      command: docker-build willfarrell/autoheal --build-arg arch=library --suffix -x86_64
+    - name: latest
+      command: docker-build willfarrell/autoheal --build-arg arch=library
+    - name: 386
+      command: docker-build willfarrell/autoheal --build-arg arch=i386 --suffix -386
     - name: amd64
       command: docker-build willfarrell/autoheal --build-arg arch=amd64 --suffix -amd64
-    - name: arm32v6
-      command: docker-build willfarrell/autoheal --build-arg arch=arm32v6 --suffix -arm32v6
-    - name: arm64v8
-      command: docker-build willfarrell/autoheal --build-arg arch=arm64v8 --suffix -arm64v8
-    - name: i386
-      command: docker-build willfarrell/autoheal --build-arg arch=i386 --suffix -i386
+    - name: arm
+      command: docker-build willfarrell/autoheal --build-arg arch=arm32v6 --suffix -arm
+    - name: arm64
+      command: docker-build willfarrell/autoheal --build-arg arch=arm64v8 --suffix -arm64
     - name: ppc64le
       command: docker-build willfarrell/autoheal --build-arg arch=ppc64le --suffix -ppc64le
+    #- name: mips
+    #  command: docker-build willfarrell/autoheal --build-arg arch=mips --suffix -mips
+    #- name: mipsle
+    #  command: docker-build willfarrell/autoheal --build-arg arch=mipsle --suffix -mipsle
+    #- name: mips64
+    #  command: docker-build willfarrell/autoheal --build-arg arch=mips64 --suffix -mips64
+    #- name: mips64le
+    #  command: docker-build willfarrell/autoheal --build-arg arch=mips64le --suffix -mips64le
     # TODO resolve: standard_init_linux.go:207: exec user process caused "exec format error"
+
     #- name: s390x
     #  command: docker-build willfarrell/autoheal --build-arg arch=s390x --suffix -s390x
 
@@ -45,4 +54,4 @@
     - tag: ^(master|develop|release/\*|v[0-9]+\.[0-9]+\.[0-9]+)
       command: docker-push willfarrell/autoheal
     - tag: ^(master|develop|release/\*|v[0-9]+\.[0-9]+\.[0-9]+)
-      command: docker-push-manifest willfarrell/autoheal
+      command: docker-push-manifest willfarrell/autoheal --os linux
