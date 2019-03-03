@@ -6,7 +6,7 @@ base:
     - ./:/data
 
 docker:
-  image: willfarrell/codeship-docker:0.1.0
+  image: willfarrell/codeship-docker
   cached: true
   env_file: .tmp/env
   volumes_from:
