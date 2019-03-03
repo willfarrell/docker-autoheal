@@ -5,10 +5,6 @@ base:
   volumes:
     - ./:/data
 
-multiarch:
-  image: multiarch/qemu-user-static:register
-  cache: true
-  
 docker:
   image: willfarrell/codeship-docker
   cached: true

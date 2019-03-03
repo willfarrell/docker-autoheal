@@ -1,9 +1,3 @@
-- name: Enable Multi-Arch
-  type: serial
-  service: multiarch
-  steps:
-    - command: --reset
-
 - name: Setup
   type: serial
   service: base
@@ -15,7 +9,7 @@
   service: docker
   steps:
     - command: docker-env-check
-    - command: docker-auth
+    - command: docker-auth --multi-arch
 
 - name: Build Docker Images
   type: parallel
@@ -41,10 +35,8 @@
     #  command: docker-build willfarrell/autoheal --build-arg arch=mips64 --suffix -mips64
     #- name: mips64le
     #  command: docker-build willfarrell/autoheal --build-arg arch=mips64le --suffix -mips64le
-    # TODO resolve: standard_init_linux.go:207: exec user process caused "exec format error"
-
-    #- name: s390x
-    #  command: docker-build willfarrell/autoheal --build-arg arch=s390x --suffix -s390x
+    - name: s390x
+      command: docker-build willfarrell/autoheal --build-arg arch=s390x --suffix -s390x
 
 - name: Build latest Docker
   type: serial
