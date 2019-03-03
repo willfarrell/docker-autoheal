@@ -9,41 +9,34 @@
   service: docker
   steps:
     - command: docker-env-check
-    - command: docker-auth --multi-arch
+    - command: docker-auth
 
 - name: Build Docker Images
   type: parallel
   service: docker
   steps:
     - name: latest
-      command: docker-build willfarrell/autoheal --build-arg arch=library
+      command: docker-build willfarrell/autoheal --build-arg
     - name: 386
       command: docker-build willfarrell/autoheal --build-arg arch=i386 --suffix -386
     - name: amd64
       command: docker-build willfarrell/autoheal --build-arg arch=amd64 --suffix -amd64
     - name: arm
-      command: docker-build willfarrell/autoheal --build-arg arch=arm32v6 --suffix -arm
+      command: docker-build willfarrell/autoheal --multi-arch --build-arg arch=arm32v6 --suffix -arm
     - name: arm64
-      command: docker-build willfarrell/autoheal --build-arg arch=arm64v8 --suffix -arm64
+      command: docker-build willfarrell/autoheal --multi-arch --build-arg arch=arm64v8 --suffix -arm64
     - name: ppc64le
-      command: docker-build willfarrell/autoheal --build-arg arch=ppc64le --suffix -ppc64le
+      command: docker-build willfarrell/autoheal --multi-arch --build-arg arch=ppc64le --suffix -ppc64le
     #- name: mips
-    #  command: docker-build willfarrell/autoheal --build-arg arch=mips --suffix -mips
+    #  command: docker-build willfarrell/autoheal --multi-arch --build-arg arch=mips --suffix -mips
     #- name: mipsle
-    #  command: docker-build willfarrell/autoheal --build-arg arch=mipsle --suffix -mipsle
+    #  command: docker-build willfarrell/autoheal --multi-arch --build-arg arch=mipsle --suffix -mipsle
     #- name: mips64
-    #  command: docker-build willfarrell/autoheal --build-arg arch=mips64 --suffix -mips64
+    #  command: docker-build willfarrell/autoheal --multi-arch --build-arg arch=mips64 --suffix -mips64
     #- name: mips64le
-    #  command: docker-build willfarrell/autoheal --build-arg arch=mips64le --suffix -mips64le
+    #  command: docker-build willfarrell/autoheal --multi-arch --build-arg arch=mips64le --suffix -mips64le
     - name: s390x
-      command: docker-build willfarrell/autoheal --build-arg arch=s390x --suffix -s390x
-
-- name: Build latest Docker
-  type: serial
-  service: docker
-  steps:
-    - name: latest
-      command: docker-build willfarrell/autoheal --build-arg arch=library
+      command: docker-build willfarrell/autoheal --multi-arch --build-arg arch=s390x --suffix -s390x
 
 - name: Push Docker Images
   type: parallel
