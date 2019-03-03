@@ -1,3 +1,9 @@
+- name: Enable Multi-Arch
+  type: serial
+  service: multiarch
+  steps:
+    - command: --reset
+
 - name: Setup
   type: serial
   service: base
