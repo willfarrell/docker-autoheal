@@ -8,6 +8,8 @@ This container is a stand-in till there is native support for `--exit-on-unhealt
 - [`latest` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/master/Dockerfile)
 
 [![](https://images.microbadger.com/badges/version/willfarrell/autoheal.svg)](http://microbadger.com/images/willfarrell/autoheal "Get your own version badge on microbadger.com")  [![](https://images.microbadger.com/badges/image/willfarrell/autoheal.svg)](http://microbadger.com/images/willfarrell/autoheal "Get your own image badge on microbadger.com")
+[![Backers on Open Collective](https://opencollective.com/docker-autoheal/backers/badge.svg)](#backers)
+ [![Sponsors on Open Collective](https://opencollective.com/docker-autoheal/sponsors/badge.svg)](#sponsors) 
 
 ## How to use
 ```bash
@@ -50,3 +52,33 @@ docker run -d \
     -v /var/run/docker.sock:/var/run/docker.sock \
     autoheal                                                                        
 ```
+
+## Contributors
+
+This project exists thanks to all the people who contribute. 
+<a href="https://github.com/willfarrell/docker-autoheal/graphs/contributors"><img src="https://opencollective.com/docker-autoheal/contributors.svg?width=890&button=false" /></a>
+
+
+## Backers
+
+Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/docker-autoheal#backer)]
+
+<a href="https://opencollective.com/docker-autoheal#backers" target="_blank"><img src="https://opencollective.com/docker-autoheal/backers.svg?width=890"></a>
+
+
+## Sponsors
+
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/docker-autoheal#sponsor)]
+
+<a href="https://opencollective.com/docker-autoheal/sponsor/0/website" target="_blank"><img src="https://opencollective.com/docker-autoheal/sponsor/0/avatar.svg"></a>
+<a href="https://opencollective.com/docker-autoheal/sponsor/1/website" target="_blank"><img src="https://opencollective.com/docker-autoheal/sponsor/1/avatar.svg"></a>
+<a href="https://opencollective.com/docker-autoheal/sponsor/2/website" target="_blank"><img src="https://opencollective.com/docker-autoheal/sponsor/2/avatar.svg"></a>
+<a href="https://opencollective.com/docker-autoheal/sponsor/3/website" target="_blank"><img src="https://opencollective.com/docker-autoheal/sponsor/3/avatar.svg"></a>
+<a href="https://opencollective.com/docker-autoheal/sponsor/4/website" target="_blank"><img src="https://opencollective.com/docker-autoheal/sponsor/4/avatar.svg"></a>
+<a href="https://opencollective.com/docker-autoheal/sponsor/5/website" target="_blank"><img src="https://opencollective.com/docker-autoheal/sponsor/5/avatar.svg"></a>
+<a href="https://opencollective.com/docker-autoheal/sponsor/6/website" target="_blank"><img src="https://opencollective.com/docker-autoheal/sponsor/6/avatar.svg"></a>
+<a href="https://opencollective.com/docker-autoheal/sponsor/7/website" target="_blank"><img src="https://opencollective.com/docker-autoheal/sponsor/7/avatar.svg"></a>
+<a href="https://opencollective.com/docker-autoheal/sponsor/8/website" target="_blank"><img src="https://opencollective.com/docker-autoheal/sponsor/8/avatar.svg"></a>
+<a href="https://opencollective.com/docker-autoheal/sponsor/9/website" target="_blank"><img src="https://opencollective.com/docker-autoheal/sponsor/9/avatar.svg"></a>
+
+
