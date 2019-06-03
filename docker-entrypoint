@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 set -e
 set -o pipefail
@@ -29,25 +29,36 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
   fi
 
   AUTOHEAL_START_PERIOD=${AUTOHEAL_START_PERIOD:=0}
-  echo "Monitoring containers for unhealthy status in ${AUTOHEAL_START_PERIOD} second(s)"
+  echo -n "Monitoring containers for unhealthy status in ${AUTOHEAL_START_PERIOD} second(s)"
+  if [ -n "$ENABLE_DELAYED_RESTART" ]; then
+   echo -n " with delayed restart"
+  fi
+  echo
   sleep ${AUTOHEAL_START_PERIOD}
 
   while true; do
     sleep ${AUTOHEAL_INTERVAL:=5}
     
+    SHOULD_BE_RESTARTED="${UNHEALTHY_CONTAINERS:-}"
+    UNHEALTHY_CONTAINERS=""
+
     apiUrl="http://localhost/containers/json?filters=\{\"health\":\[\"unhealthy\"\]${labelFilter}\}"
     stopTimeout=".Labels[\"autoheal.stop.timeout\"] // ${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}"
-    docker_curl "$apiUrl" | \
-    jq -r "foreach .[] as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0], $stopTimeout )" | \
-    while read -r CONTAINER_ID && read -r CONTAINER_NAME && read -r TIMEOUT; do
+
+    exec 200< <(docker_curl "$apiUrl" | jq -r "foreach .[] as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0], $stopTimeout )")
+
+    while read -u 200 -r CONTAINER_ID && read -u 200 -r CONTAINER_NAME && read -u 200 -r TIMEOUT; do
         CONTAINER_SHORT_ID=${CONTAINER_ID:0:12}
         DATE=$(date +%d-%m-%Y" "%H:%M:%S)
         if [ "null" = "$CONTAINER_NAME" ]; then
           echo "$DATE Container name of ($CONTAINER_SHORT_ID) is null, which implies container does not exist - don't restart"
-        else
+        elif [ -z "$ENABLE_DELAYED_RESTART" ] || echo "$SHOULD_BE_RESTARTED" | grep -wq "$CONTAINER_SHORT_ID" ; then
           echo "$DATE Container ${CONTAINER_NAME} ($CONTAINER_SHORT_ID) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout"
           docker_curl -f -XPOST "http://localhost/containers/${CONTAINER_ID}/restart?t=${TIMEOUT}" \
             || echo "$DATE Restarting container $CONTAINER_SHORT_ID failed"
+        else
+          echo "$DATE Container ${CONTAINER_NAME} ($CONTAINER_SHORT_ID) found to be unhealthy - Marking container for restart"
+          UNHEALTHY_CONTAINERS="$UNHEALTHY_CONTAINERS $CONTAINER_SHORT_ID"
         fi
     done
   done
