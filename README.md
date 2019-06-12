@@ -24,11 +24,14 @@ b) Set ENV `AUTOHEAL_CONTAINER_LABEL=all` to watch all running containers.
 
 c) Set ENV `AUTOHEAL_CONTAINER_LABEL` to existing label name that has the value `true`.
 
+d) Set ENV `AUTOHEAL_CONTAINER_GROUP=mygroup` to use look for a lable `autoheal=mygroup` instead of `true`
+
 Note: You must apply `HEALTHCHECK` to your docker images first. See https://docs.docker.com/engine/reference/builder/#healthcheck for details.
 
 ## ENV Defaults
 ```
 AUTOHEAL_CONTAINER_LABEL=autoheal
+AUTOHEAL_CONTAINER_GROUP=true
 AUTOHEAL_INTERVAL=5   # check every 5 seconds
 AUTOHEAL_START_PERIOD=0   # wait 0 seconds before first health check
 AUTOHEAL_DEFAULT_STOP_TIMEOUT=10   # Docker waits max 10 seconds (the Docker default) for a container to stop before killing during restarts (container overridable via label, see below)
