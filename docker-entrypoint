@@ -12,10 +12,16 @@ term_handler() {
 }
 
 docker_curl() {
-  curl --max-time "${CURL_TIMEOUT}" --no-buffer -s --unix-socket "${DOCKER_SOCK}" "$@"
+  curl --max-time "${CURL_TIMEOUT}" --no-buffer -s --unix-socket "${DOCKER_SOCK}" "$@" || return 1
+  return 0
 }
 
 trap 'kill ${!}; term_handler' SIGTERM
+
+if [ "$1" = 'healthcheck' ]; then
+  docker_curl --fail http://localhost/_ping
+  exit $?
+fi
 
 if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
   
