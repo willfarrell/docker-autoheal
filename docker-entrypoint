@@ -1,63 +1,89 @@
 #!/usr/bin/env sh
 
 set -e
+# shellcheck disable=2039
 set -o pipefail
 
 DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 
-# SIGTERM-handler
-term_handler() {
-  exit 143; # 128 + 15 -- SIGTERM
-}
+AUTOHEAL_CONTAINER_LABEL=${AUTOHEAL_CONTAINER_LABEL:-autoheal}
+AUTOHEAL_START_PERIOD=${AUTOHEAL_START_PERIOD:-0}
+AUTOHEAL_INTERVAL=${AUTOHEAL_INTERVAL:-5}
+AUTOHEAL_DEFAULT_STOP_TIMEOUT=${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}
 
+# shellcheck disable=2039
 docker_curl() {
-  curl --max-time "${CURL_TIMEOUT}" --no-buffer -s --unix-socket "${DOCKER_SOCK}" "$@" || return 1
-  return 0
+  curl --max-time "$CURL_TIMEOUT" --no-buffer -s --unix-socket "$DOCKER_SOCK" "$@"
 }
 
-trap 'kill ${!}; term_handler' SIGTERM
-
-if [ "$1" = 'healthcheck' ]; then
-  docker_curl --fail http://localhost/_ping
-  exit $?
-fi
-
-if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
-  
-  # https://docs.docker.com/engine/api/v1.25/
+# shellcheck disable=2039
+get_container_info() {
+  local label_filter
+  local url
 
   # Set container selector
-  if [ "$AUTOHEAL_CONTAINER_LABEL" == "all" ]; then
-    labelFilter=""
+  if [ "$AUTOHEAL_CONTAINER_LABEL" = "all" ]
+  then
+    label_filter=""
   else
-    labelFilter=",\"label\":\[\"${AUTOHEAL_CONTAINER_LABEL:=autoheal}=true\"\]"
+    label_filter=",\"label\":\[\"${AUTOHEAL_CONTAINER_LABEL}=true\"\]"
+  fi
+  url="http://localhost/containers/json?filters=\{\"health\":\[\"unhealthy\"\]${label_filter}\}"
+  docker_curl "$url"
+}
+
+# shellcheck disable=2039
+restart_container() {
+  local container_id="$1"
+  local timeout="$2"
+
+  docker_curl -f -X POST "http://localhost/containers/${container_id}/restart?t=${timeout}"
+}
+
+# SIGTERM-handler
+term_handler() {
+  exit 143  # 128 + 15 -- SIGTERM
+}
+
+# shellcheck disable=2039
+trap 'kill $$; term_handler' SIGTERM
+
+if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ]
+then
+  # https://docs.docker.com/engine/api/v1.25/
+
+  # Delayed startup
+  if [ "$AUTOHEAL_START_PERIOD" -gt 0 ]
+  then
+  echo "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)"
+    sleep "$AUTOHEAL_START_PERIOD"
   fi
 
-  AUTOHEAL_START_PERIOD=${AUTOHEAL_START_PERIOD:=0}
-  echo "Monitoring containers for unhealthy status in ${AUTOHEAL_START_PERIOD} second(s)"
-  sleep ${AUTOHEAL_START_PERIOD}
+  while true
+  do
+    STOP_TIMEOUT=".Labels[\"autoheal.stop.timeout\"] // $AUTOHEAL_DEFAULT_STOP_TIMEOUT"
+    get_container_info | \
+      jq -r "foreach .[] as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0], ${STOP_TIMEOUT})" | \
+      while read -r CONTAINER_ID && read -r CONTAINER_NAME && read -r TIMEOUT
+    do
+      # shellcheck disable=2039
+      CONTAINER_SHORT_ID=${CONTAINER_ID:0:12}
+      DATE=$(date +%d-%m-%Y" "%H:%M:%S)
 
-  while true; do
-    sleep ${AUTOHEAL_INTERVAL:=5}
-    
-    apiUrl="http://localhost/containers/json?filters=\{\"health\":\[\"unhealthy\"\]${labelFilter}\}"
-    stopTimeout=".Labels[\"autoheal.stop.timeout\"] // ${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}"
-    docker_curl "$apiUrl" | \
-    jq -r "foreach .[] as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0], $stopTimeout )" | \
-    while read -r CONTAINER_ID && read -r CONTAINER_NAME && read -r TIMEOUT; do
-        CONTAINER_SHORT_ID=${CONTAINER_ID:0:12}
-        DATE=$(date +%d-%m-%Y" "%H:%M:%S)
-        if [ "null" = "$CONTAINER_NAME" ]; then
-          echo "$DATE Container name of ($CONTAINER_SHORT_ID) is null, which implies container does not exist - don't restart"
-        else
-          echo "$DATE Container ${CONTAINER_NAME} ($CONTAINER_SHORT_ID) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout"
-          docker_curl -f -XPOST "http://localhost/containers/${CONTAINER_ID}/restart?t=${TIMEOUT}" \
-            || echo "$DATE Restarting container $CONTAINER_SHORT_ID failed"
+      if [ "$CONTAINER_NAME" = "null" ]
+      then
+        echo "$DATE Container name of (${CONTAINER_SHORT_ID}) is null, which implies container does not exist - don't restart" >&2
+      else
+        echo "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout"
+        if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
+        then
+          echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
         fi
+      fi
     done
+    sleep "$AUTOHEAL_INTERVAL"
   done
-
 else
   exec "$@"
 fi
