@@ -5,16 +5,31 @@ set -e
 set -o pipefail
 
 DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
+UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
+
+# only use unix domain socket if no TCP endpoint is defined
+case "${DOCKER_SOCK}" in
+  "tcp://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcp://#https://#')"
+             CA="--cacert /certs/ca.pem"
+             CLIENT_KEY="--key /certs/client-key.pem"
+             CLIENT_CERT="--cert /certs/client-cert.pem"
+             ;;
+  *)         HTTP_ENDPOINT="http://localhost"
+             UNIX_SOCK="--unix-socket ${DOCKER_SOCK}"
+             ;;
+esac
 
 AUTOHEAL_CONTAINER_LABEL=${AUTOHEAL_CONTAINER_LABEL:-autoheal}
 AUTOHEAL_START_PERIOD=${AUTOHEAL_START_PERIOD:-0}
 AUTOHEAL_INTERVAL=${AUTOHEAL_INTERVAL:-5}
 AUTOHEAL_DEFAULT_STOP_TIMEOUT=${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}
 
-# shellcheck disable=2039
 docker_curl() {
-  curl --max-time "$CURL_TIMEOUT" --no-buffer -s --unix-socket "$DOCKER_SOCK" "$@"
+  curl --max-time "${CURL_TIMEOUT}" --no-buffer -s \
+  ${CA} ${CLIENT_KEY} ${CLIENT_CERT} \
+  ${UNIX_SOCK} \
+  "$@"
 }
 
 # shellcheck disable=2039
@@ -29,7 +44,7 @@ get_container_info() {
   else
     label_filter=",\"label\":\[\"${AUTOHEAL_CONTAINER_LABEL}=true\"\]"
   fi
-  url="http://localhost/containers/json?filters=\{\"health\":\[\"unhealthy\"\]${label_filter}\}"
+  url="${HTTP_ENDPOINT}/containers/json?filters=\{\"health\":\[\"unhealthy\"\]${label_filter}\}"
   docker_curl "$url"
 }
 
@@ -38,7 +53,7 @@ restart_container() {
   local container_id="$1"
   local timeout="$2"
 
-  docker_curl -f -X POST "http://localhost/containers/${container_id}/restart?t=${timeout}"
+  docker_curl -f -X POST "${HTTP_ENDPOINT}/containers/${container_id}/restart?t=${timeout}"
 }
 
 # SIGTERM-handler
@@ -49,10 +64,7 @@ term_handler() {
 # shellcheck disable=2039
 trap 'kill $$; term_handler' SIGTERM
 
-if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ]
-then
-  # https://docs.docker.com/engine/api/v1.25/
-
+if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
   # Delayed startup
   if [ "$AUTOHEAL_START_PERIOD" -gt 0 ]
   then
@@ -84,6 +96,7 @@ then
     done
     sleep "$AUTOHEAL_INTERVAL"
   done
+
 else
   exec "$@"
 fi
