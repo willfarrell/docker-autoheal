@@ -24,5 +24,5 @@ jobs:
         env:
           DOCKER_CLI_EXPERIMENTAL: enabled
         run: |
-          curl -fsSL https://raw.githubusercontent.com/pschmitt/ci-setup-docker-buildx/master/setup.sh | bash
-          ./.github/workflows/build.sh
+          bash ./.github/workflows/setup.sh |
+          bash ./buildx.sh
