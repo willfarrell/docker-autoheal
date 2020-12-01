@@ -43,6 +43,13 @@ The certificates, and keys need these names:
 * client-cert.pem
 * client-key.pem
 
+### Change Timezone
+If you need the timezone to match the local machine, you can map the `/etc/localtime` into the container.
+```
+docker run ... -v /etc/localtime:/etc/localtime:ro
+```
+
+
 ## ENV Defaults
 ```
 AUTOHEAL_CONTAINER_LABEL=autoheal
