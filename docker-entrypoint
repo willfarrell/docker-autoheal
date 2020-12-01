@@ -4,7 +4,20 @@ set -e
 set -o pipefail
 
 DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
+UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
+
+# only use unix domain socket if no TCP endpoint is defined
+case "${DOCKER_SOCK}" in
+  "tcp://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcp://#https://#')"
+             CA="--cacert /certs/ca.pem"
+             CLIENT_KEY="--key /certs/client-key.pem"
+             CLIENT_CERT="--cert /certs/client-cert.pem"
+             ;;
+  *)         HTTP_ENDPOINT="http://localhost"
+             UNIX_SOCK="--unix-socket ${DOCKER_SOCK}"
+             ;;
+esac
 
 # SIGTERM-handler
 term_handler() {
@@ -12,19 +25,28 @@ term_handler() {
 }
 
 docker_curl() {
-  curl --max-time "${CURL_TIMEOUT}" --no-buffer -s --unix-socket "${DOCKER_SOCK}" "$@" || return 1
+  curl --max-time "${CURL_TIMEOUT}" --no-buffer -s \
+  ${CA} ${CLIENT_KEY} ${CLIENT_CERT} \
+  ${UNIX_SOCK} \
+  "$@" || return 1
   return 0
 }
 
 trap 'kill ${!}; term_handler' SIGTERM
 
 if [ "$1" = 'healthcheck' ]; then
-  docker_curl --fail http://localhost/_ping
+  docker_curl --fail "${HTTP_ENDPOINT}/_ping"
   exit $?
 fi
 
-if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
-  
+if [ "$1" = 'autoheal' ]; then
+  if [ ! -x $UNIX_SOCK ]; then
+    if [ ! -e "${DOCKER_SOCK}" ]; then
+      echo "${DOCKER_SOCK} not found"
+      exit 1
+    fi
+  fi
+
   # https://docs.docker.com/engine/api/v1.25/
 
   # Set container selector
@@ -40,8 +62,8 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
 
   while true; do
     sleep ${AUTOHEAL_INTERVAL:=5}
-    
-    apiUrl="http://localhost/containers/json?filters=\{\"health\":\[\"unhealthy\"\]${labelFilter}\}"
+
+    apiUrl="${HTTP_ENDPOINT}/containers/json?filters=\{\"health\":\[\"unhealthy\"\]${labelFilter}\}"
     stopTimeout=".Labels[\"autoheal.stop.timeout\"] // ${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}"
     docker_curl "$apiUrl" | \
     jq -r "foreach .[] as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0], $stopTimeout )" | \
@@ -52,7 +74,7 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
           echo "$DATE Container name of ($CONTAINER_SHORT_ID) is null, which implies container does not exist - don't restart"
         else
           echo "$DATE Container ${CONTAINER_NAME} ($CONTAINER_SHORT_ID) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout"
-          docker_curl -f -XPOST "http://localhost/containers/${CONTAINER_ID}/restart?t=${TIMEOUT}" \
+          docker_curl -f -XPOST "${HTTP_ENDPOINT}/containers/${CONTAINER_ID}/restart?t=${TIMEOUT}" \
             || echo "$DATE Restarting container $CONTAINER_SHORT_ID failed"
         fi
     done

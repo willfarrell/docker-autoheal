@@ -10,12 +10,23 @@ This container is a stand-in till there is native support for `--exit-on-unhealt
 [![](https://images.microbadger.com/badges/version/willfarrell/autoheal.svg)](http://microbadger.com/images/willfarrell/autoheal "Get your own version badge on microbadger.com")  [![](https://images.microbadger.com/badges/image/willfarrell/autoheal.svg)](http://microbadger.com/images/willfarrell/autoheal "Get your own image badge on microbadger.com")
 
 ## How to use
+### UNIX socket passthrough
 ```bash
 docker run -d \
     --name autoheal \
     --restart=always \
     -e AUTOHEAL_CONTAINER_LABEL=all \
     -v /var/run/docker.sock:/var/run/docker.sock \
+    willfarrell/autoheal
+```
+### TCP socket
+```bash
+docker run -d \
+    --name autoheal \
+    --restart=always \
+    -e AUTOHEAL_CONTAINER_LABEL=all \
+    -e DOCKER_SOCK=tcp://HOST:PORT \
+    -v /path/to/certs/:/certs/:ro \
     willfarrell/autoheal
 ```
 a) Apply the label `autoheal=true` to your container to have it watched.
@@ -25,6 +36,12 @@ b) Set ENV `AUTOHEAL_CONTAINER_LABEL=all` to watch all running containers.
 c) Set ENV `AUTOHEAL_CONTAINER_LABEL` to existing label name that has the value `true`.
 
 Note: You must apply `HEALTHCHECK` to your docker images first. See https://docs.docker.com/engine/reference/builder/#healthcheck for details.
+See https://docs.docker.com/engine/security/https/ for how to configure TCP with mTLS
+
+The certificates, and keys need these names:
+* ca.pem
+* client-cert.pem
+* client-key.pem
 
 ## ENV Defaults
 ```
