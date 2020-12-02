@@ -5,7 +5,7 @@ This functionality was proposed to be included with the addition of `HEALTHCHECK
 This container is a stand-in till there is native support for `--exit-on-unhealthy` https://github.com/docker/docker/pull/22719.
 
 ## Supported tags and Dockerfile links
-- [`latest` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/main/Dockerfile)
+- [`latest` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/main/Dockerfile) - Built daily
 - [`1.0.0` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/1.0.0/Dockerfile)
 - [`v0.7.0` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/v0.7.0/Dockerfile)
 
