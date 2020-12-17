@@ -31,11 +31,11 @@ jobs:
 
       - if: github.ref == 'refs/heads/main'
         name: Conditional(Set tag as `latest`)
-        run: echo "tag=willfarrell/crontab:latest" >> $GITHUB_ENV
+        run: echo "tag=willfarrell/autoheal:latest" >> $GITHUB_ENV
 
       - if: startsWith(github.ref, 'refs/tags/')
         name: Conditional(Set tag as `{version}`)
-        run: echo "tag=willfarrell/crontab:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+        run: echo "tag=willfarrell/autoheal:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
       -
         name: Build and push
