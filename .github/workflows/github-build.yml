@@ -21,6 +21,7 @@ jobs:
         uses: docker/setup-qemu-action@v1
       -
         name: Set up Docker Buildx
+        id: buildx
         uses: docker/setup-buildx-action@v1
       -
         name: Login to DockerHub
@@ -44,5 +45,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          platforms: ${{ steps.buildx.outputs.platforms }}
           tags: |
             ${{ env.tag }}
