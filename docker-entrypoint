@@ -44,7 +44,7 @@ get_container_info() {
   else
     label_filter=",\"label\":\[\"${AUTOHEAL_CONTAINER_LABEL}=true\"\]"
   fi
-  url="${HTTP_ENDPOINT}/containers/json?filters=\{\"health\":\[\"unhealthy\"\]${label_filter}\}"
+  url="${HTTP_ENDPOINT}/containers/json?filters=\{\"status\":\[\"created\",\"running\",\"paused\",\"exited\",\"dead\"],\"health\":\[\"unhealthy\"\]${label_filter}\}"
   docker_curl "$url"
 }
 
