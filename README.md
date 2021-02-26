@@ -6,7 +6,7 @@ This container is a stand-in till there is native support for `--exit-on-unhealt
 
 ## Supported tags and Dockerfile links
 - [`latest` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/main/Dockerfile) - Built daily
-- [`1.0.0` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/1.0.0/Dockerfile)
+- [`1.1.0` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/1.1.0/Dockerfile)
 - [`v0.7.0` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/v0.7.0/Dockerfile)
 
 ![](https://img.shields.io/docker/pulls/willfarrell/autoheal "Total docker pulls") [![](https://images.microbadger.com/badges/image/willfarrell/autoheal.svg)](http://microbadger.com/images/willfarrell/autoheal "Docker layer breakdown")
