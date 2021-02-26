@@ -1,0 +1,42 @@
+version: '3.7'
+
+services:
+
+  should-keep-restarting:
+    image: alpine
+    container_name: should-keep-restarting
+    network_mode: none
+    restart: "no"
+    healthcheck:
+      test: exit 1
+      interval: 3s
+      timeout: 1s
+      retries: 3
+      start_period: 5s
+    command: tail -f /dev/null
+
+  shouldnt-restart:
+    image: alpine
+    container_name: shouldnt-restart
+    network_mode: none
+    restart: "no"
+    healthcheck:
+      test: exit 0
+      interval: 2s
+      timeout: 1s
+      retries: 1
+      start_period: 1s
+    command: tail -f /dev/null
+
+
+  autoheal:
+    container_name: autoheal
+    build:
+      context: ../
+    restart: unless-stopped
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: "all"
+      AUTOHEAL_INTERVAL: "10"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    network_mode: none
