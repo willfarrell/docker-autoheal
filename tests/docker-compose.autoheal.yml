@@ -3,9 +3,10 @@ version: '3.7'
 services:
 
   watch-autoheal:
-    container_name: watch-autoheal
     build: watch-autoheal
     restart: "no"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      COMPOSE_PROJECT_NAME: $COMPOSE_PROJECT_NAME
     network_mode: none

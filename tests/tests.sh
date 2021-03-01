@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-COMPOSE_PROJECT_NAME=autoheal-test
+COMPOSE_PROJECT_NAME=${1:-autoheal-test}
+export COMPOSE_PROJECT_NAME
 
 function cleanup()
 {
     exit_status=$?
     echo "exit was $exit_status"
-    docker-compose -f docker-compose.autoheal.yml -f docker-compose.yml rm -f || true
+    # stop autoheal first, to stop it restarting the test containers while we try to stop them
+    docker-compose stop autoheal
+    docker-compose -f docker-compose.autoheal.yml -f docker-compose.yml down || true
     exit "$exit_status"
 }
 trap cleanup EXIT
