@@ -64,7 +64,13 @@ term_handler() {
 # shellcheck disable=2039
 trap 'kill $$; term_handler' SIGTERM
 
-if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
+if [ "$1" = "autoheal" ]
++then
+  if [ -n "$UNIX_SOCK" ] && ! [ -S "$DOCKER_SOCK" ]
+  then
+    echo "Connection problem"
+    exit
+  fi
   # Delayed startup
   if [ "$AUTOHEAL_START_PERIOD" -gt 0 ]
   then
