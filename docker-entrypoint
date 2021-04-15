@@ -10,7 +10,9 @@ CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
-  "tcp://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcp://#https://#')"
+  "tcp://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcp://#http://#')"
+             ;;
+  "tcps://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcps://#https://#')"
              CA="--cacert /certs/ca.pem"
              CLIENT_KEY="--key /certs/client-key.pem"
              CLIENT_CERT="--cert /certs/client-cert.pem"
