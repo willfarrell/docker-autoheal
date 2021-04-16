@@ -71,7 +71,7 @@ if [ "$1" = "autoheal" ]
   if [ -n "$UNIX_SOCK" ] && ! [ -S "$DOCKER_SOCK" ]
   then
     echo "Connection problem"
-    exit
+    exit 1
   fi
   # Delayed startup
   if [ "$AUTOHEAL_START_PERIOD" -gt 0 ]
