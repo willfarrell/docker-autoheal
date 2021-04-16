@@ -27,7 +27,7 @@ docker run -d \
     --name autoheal \
     --restart=always \
     -e AUTOHEAL_CONTAINER_LABEL=all \
-    -e DOCKER_SOCK=tcp://HOST:PORT \
+    -e DOCKER_SOCK=tcps://HOST:PORT \
     -v /path/to/certs/:/certs/:ro \
     willfarrell/autoheal
 ```
@@ -38,7 +38,8 @@ b) Set ENV `AUTOHEAL_CONTAINER_LABEL=all` to watch all running containers.
 c) Set ENV `AUTOHEAL_CONTAINER_LABEL` to existing label name that has the value `true`.
 
 Note: You must apply `HEALTHCHECK` to your docker images first. See https://docs.docker.com/engine/reference/builder/#healthcheck for details.
-See https://docs.docker.com/engine/security/https/ for how to configure TCP with mTLS
+Use `tcp://` for unencrypted tcp and `tcps://` for TLS enabled connection.
+See https://docs.docker.com/engine/security/https/ for how to configure TCP with mTLS.
 
 The certificates, and keys need these names:
 * ca.pem
