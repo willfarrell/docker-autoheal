@@ -7,6 +7,8 @@ set -o pipefail
 DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
+WEBHOOK_TEAMS=${WEBHOOK_TEAMS:-""}
+WEBHOOK_SLACK=${WEBHOOK_SLACK:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
@@ -56,6 +58,21 @@ restart_container() {
   docker_curl -f -X POST "${HTTP_ENDPOINT}/containers/${container_id}/restart?t=${timeout}"
 }
 
+notify_webhook() {
+  local text="$1"
+  local data="{\"text\": \"${text}\"}"
+
+  if [ -n "$WEBHOOK_SLACK" ]
+  then
+    curl -X POST -H "Content-type: application/json" -d $data  $WEBHOOK_SLACK
+  fi
+  
+  if [ -n "$WEBHOOK_TEAMS" ]
+  then
+    curl -X POST -H "Content-Type: application/json" -d $data $WEBHOOK_TEAMS
+  fi
+}
+
 # SIGTERM-handler
 term_handler() {
   exit 143  # 128 + 15 -- SIGTERM
@@ -94,6 +111,9 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
         then
           echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
+          notify_webhook "Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container."
+        else 
+          notify_webhook "Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container"
         fi
       fi
     done
