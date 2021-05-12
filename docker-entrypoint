@@ -63,7 +63,7 @@ notify_webhook() {
   if [ -n "$WEBHOOK_URL" ]
   then
     # execute webhook requests as background process to prevent healer from blocking
-    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL &
+    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
   fi
 }
 
@@ -115,9 +115,9 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
         then
           echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
-          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!"
+          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
         else 
-          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!"
+          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
         fi
       fi
     done
