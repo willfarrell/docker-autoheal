@@ -58,13 +58,22 @@ restart_container() {
 }
 
 notify_webhook() {
-  local text="$1"
-  local data="{\"text\": \"${text}\"}"
+  local text="$@"
 
   if [ -n "$WEBHOOK_URL" ]
   then
-    curl -X POST -H "Content-type: application/json" -d $data  $WEBHOOK_URL
+    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
   fi
+}
+
+# https://towardsdatascience.com/proper-ways-to-pass-environment-variables-in-json-for-curl-post-f797d2698bf3
+generate_webhook_payload() {
+  local text="$@"
+  cat <<EOF
+{
+  "text":"$text"
+} 
+EOF
 }
 
 # SIGTERM-handler
@@ -105,9 +114,9 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
         then
           echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
-          notify_webhook "Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container."
+          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!"
         else 
-          notify_webhook "Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container"
+          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!"
         fi
       fi
     done
