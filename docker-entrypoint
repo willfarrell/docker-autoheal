@@ -7,8 +7,7 @@ set -o pipefail
 DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
-WEBHOOK_TEAMS=${WEBHOOK_TEAMS:-""}
-WEBHOOK_SLACK=${WEBHOOK_SLACK:-""}
+WEBHOOK_URL=${WEBHOOK_URL:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
@@ -62,14 +61,9 @@ notify_webhook() {
   local text="$1"
   local data="{\"text\": \"${text}\"}"
 
-  if [ -n "$WEBHOOK_SLACK" ]
+  if [ -n "$WEBHOOK_URL" ]
   then
-    curl -X POST -H "Content-type: application/json" -d $data  $WEBHOOK_SLACK
-  fi
-  
-  if [ -n "$WEBHOOK_TEAMS" ]
-  then
-    curl -X POST -H "Content-Type: application/json" -d $data $WEBHOOK_TEAMS
+    curl -X POST -H "Content-type: application/json" -d $data  $WEBHOOK_URL
   fi
 }
 
