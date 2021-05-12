@@ -62,7 +62,8 @@ notify_webhook() {
 
   if [ -n "$WEBHOOK_URL" ]
   then
-    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
+    # execute webhook requests as background process to prevent healer from blocking
+    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL &
   fi
 }
 
