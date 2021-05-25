@@ -24,6 +24,11 @@ AUTOHEAL_CONTAINER_LABEL=${AUTOHEAL_CONTAINER_LABEL:-autoheal}
 AUTOHEAL_START_PERIOD=${AUTOHEAL_START_PERIOD:-0}
 AUTOHEAL_INTERVAL=${AUTOHEAL_INTERVAL:-5}
 AUTOHEAL_DEFAULT_STOP_TIMEOUT=${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}
+AUTOHEAL_NOTIFICATIONS=${AUTOHEAL_NOTIFICATIONS}
+AUTOHEAL_NOTIFICATIONS_GOTIFY_PRIORITY=${AUTOHEAL_NOTIFICATIONS_GOTIFY_PRIORITY:-5}
+AUTOHEAL_NOTIFICATIONS_GOTIFY_URL=${AUTOHEAL_NOTIFICATIONS_GOTIFY_URL}
+AUTOHEAL_NOTIFICATIONS_GOTIFY_TOKEN=${AUTOHEAL_NOTIFICATIONS_GOTIFY_TOKEN}
+
 
 docker_curl() {
   curl --max-time "${CURL_TIMEOUT}" --no-buffer -s \
@@ -61,6 +66,16 @@ term_handler() {
   exit 143  # 128 + 15 -- SIGTERM
 }
 
+notifications() {
+  local title="$1"
+  local message="$2"
+  echo $title "-" $message
+  if [ "$AUTOHEAL_NOTIFICATIONS" = "gotify" ] 
+  then
+    curl -s "$AUTOHEAL_NOTIFICATIONS_GOTIFY_URL/message?token=$AUTOHEAL_NOTIFICATIONS_GOTIFY_TOKEN" -F "title=$title" -F "message=$message" -F "priority=$AUTOHEAL_NOTIFICATIONS_GOTIFY_PRIORITY" > /dev/null
+  fi
+}
+
 # shellcheck disable=2039
 trap 'kill $$; term_handler' SIGTERM
 
@@ -68,9 +83,11 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
   # Delayed startup
   if [ "$AUTOHEAL_START_PERIOD" -gt 0 ]
   then
-  echo "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)"
+  notifications "Autoheal - Monitoring containers" "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)"
     sleep "$AUTOHEAL_START_PERIOD"
   fi
+
+  notifications "Autoheal - Start" "Autoheal is running"
 
   while true
   do
@@ -85,15 +102,18 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
 
       if [ "$CONTAINER_NAME" = "null" ]
       then
-        echo "$DATE Container name of (${CONTAINER_SHORT_ID}) is null, which implies container does not exist - don't restart" >&2
+        notifications "Autoheal - Container is null" "$DATE Container name of (${CONTAINER_SHORT_ID}) is null, which implies container does 
+not exist - don't restart"
       elif [ "$CONTAINER_STATE" = "restarting" ]
       then
-        echo "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be restarting - don't restart"
+        notifications "Autoheal - Restarting" "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be restarting - don't 
+restart"
       else
-        echo "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout"
+        notifications "Autoheal - Found unhealthy" "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy - 
+Restarting container now with ${TIMEOUT}s timeout"
         if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
         then
-          echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
+          notifications "Autoheal - Restarting" "$DATE Restarting container $CONTAINER_SHORT_ID failed"
         fi
       fi
     done
