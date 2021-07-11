@@ -8,7 +8,6 @@ DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 WEBHOOK_URL=${WEBHOOK_URL:-""}
-NOTIFY_ONLY=${NOTIFY_ONLY:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
@@ -112,19 +111,13 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
       then
         echo "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be restarting - don't restart"
       else
-
-        if [ -n "$NOTIFY_ONLY" ]
+        echo "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout"
+        if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
         then
-          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Automated container restard is disabled by NOTIFY_ONLY env variable." &
-        else
-          echo "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout"
-          if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
-          then
-            echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
-            notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
-          else 
-            notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
-          fi
+          echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
+          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
+        else 
+          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
         fi
       fi
     done
