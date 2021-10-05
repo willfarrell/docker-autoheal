@@ -7,6 +7,7 @@ set -o pipefail
 DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
+WEBHOOK_URL=${WEBHOOK_URL:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
@@ -56,6 +57,26 @@ restart_container() {
   docker_curl -f -X POST "${HTTP_ENDPOINT}/containers/${container_id}/restart?t=${timeout}"
 }
 
+notify_webhook() {
+  local text="$@"
+
+  if [ -n "$WEBHOOK_URL" ]
+  then
+    # execute webhook requests as background process to prevent healer from blocking
+    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
+  fi
+}
+
+# https://towardsdatascience.com/proper-ways-to-pass-environment-variables-in-json-for-curl-post-f797d2698bf3
+generate_webhook_payload() {
+  local text="$@"
+  cat <<EOF
+{
+  "text":"$text"
+} 
+EOF
+}
+
 # SIGTERM-handler
 term_handler() {
   exit 143  # 128 + 15 -- SIGTERM
@@ -94,6 +115,9 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
         then
           echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
+          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
+        else 
+          notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
         fi
       fi
     done
