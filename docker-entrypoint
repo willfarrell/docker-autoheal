@@ -8,6 +8,7 @@ DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 WEBHOOK_URL=${WEBHOOK_URL:-""}
+APPRISE_URL=${APPRISE_URL:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
@@ -65,6 +66,12 @@ notify_webhook() {
     # execute webhook requests as background process to prevent healer from blocking
     curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
   fi
+
+  if [ -n "$APPRISE_URL" ]
+  then
+    # execute webhook requests as background process to prevent healer from blocking
+    curl -X POST -H "Content-type: application/json" -d "$(generate_apprise_payload $text)"  $APPRISE_URL
+  fi
 }
 
 # https://towardsdatascience.com/proper-ways-to-pass-environment-variables-in-json-for-curl-post-f797d2698bf3
@@ -73,6 +80,16 @@ generate_webhook_payload() {
   cat <<EOF
 {
   "text":"$text"
+} 
+EOF
+}
+
+generate_apprise_payload() {
+  local text="$@"
+  cat <<EOF
+{
+  "title":"Autoheal",
+  "body":"$text"
 } 
 EOF
 }
