@@ -51,6 +51,16 @@ If you need the timezone to match the local machine, you can map the `/etc/local
 docker run ... -v /etc/localtime:/etc/localtime:ro
 ```
 
+### Apprise configuration
+a) Start the Apprise docker container. See: https://hub.docker.com/r/caronc/apprise
+
+b) Create an Apprise configuration for Autoheal to use:
+http://localhost:8000/cfg/autoheal
+
+See the Apprise wiki for configuration details: https://github.com/caronc/apprise/wiki
+
+c) Set the `APPRISE_URL` environment variable to use the Apprise configuration: 
+`APPRISE_URL="http://localhost:8000/notify/autoheal"`
 
 ## ENV Defaults
 ```
@@ -61,6 +71,7 @@ AUTOHEAL_DEFAULT_STOP_TIMEOUT=10   # Docker waits max 10 seconds (the Docker def
 DOCKER_SOCK=/var/run/docker.sock   # Unix socket for curl requests to Docker API
 CURL_TIMEOUT=30     # --max-time seconds for curl requests to Docker API
 WEBHOOK_URL=""    # post message to the webhook if a container was restarted (or restart failed)
+APPRISE_URL=""    # post message to Apprise if a container was restarted (or restart failed)
 ```
 
 ### Optional Container Labels
