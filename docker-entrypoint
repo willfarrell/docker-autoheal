@@ -97,7 +97,7 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
   do
     STOP_TIMEOUT=".Labels[\"autoheal.stop.timeout\"] // $AUTOHEAL_DEFAULT_STOP_TIMEOUT"
     get_container_info | \
-      jq -r "foreach .[] as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0], .State, ${STOP_TIMEOUT})" | \
+      jq -r ".[] | select(.Labels[\"autoheal\"] != \"False\") | foreach . as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0], .State, ${STOP_TIMEOUT})" | \
       while read -r CONTAINER_ID && read -r CONTAINER_NAME && read -r CONTAINER_STATE && read -r TIMEOUT
     do
       # shellcheck disable=2039
