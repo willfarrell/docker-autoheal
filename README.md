@@ -37,6 +37,8 @@ b) Set ENV `AUTOHEAL_CONTAINER_LABEL=all` to watch all running containers.
 
 c) Set ENV `AUTOHEAL_CONTAINER_LABEL` to existing label name that has the value `true`.
 
+Note: You can also exclude a container (eg. if using `AUTOHEAL_CONTAINER_LABEL=all`) by setting the label `autoheal=false`.
+
 Note: You must apply `HEALTHCHECK` to your docker images first. See https://docs.docker.com/engine/reference/builder/#healthcheck for details.
 See https://docs.docker.com/engine/security/https/ for how to configure TCP with mTLS
 
