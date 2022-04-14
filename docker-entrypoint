@@ -11,7 +11,7 @@ WEBHOOK_URL=${WEBHOOK_URL:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
-  "tcp://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcp://#https://#')"
+  "tcp://"*) HTTP_ENDPOINT="${DOCKER_SOCK//tcp:\/\///https:\/\/}"
              CA="--cacert /certs/ca.pem"
              CLIENT_KEY="--key /certs/client-key.pem"
              CLIENT_CERT="--cert /certs/client-cert.pem"
