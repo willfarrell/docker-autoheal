@@ -26,6 +26,7 @@ AUTOHEAL_START_PERIOD=${AUTOHEAL_START_PERIOD:-0}
 AUTOHEAL_INTERVAL=${AUTOHEAL_INTERVAL:-5}
 AUTOHEAL_DEFAULT_STOP_TIMEOUT=${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}
 
+# shellcheck disable=2086
 docker_curl() {
   curl --max-time "${CURL_TIMEOUT}" --no-buffer -s \
   ${CA} ${CLIENT_KEY} ${CLIENT_CERT} \
@@ -58,18 +59,18 @@ restart_container() {
 }
 
 notify_webhook() {
-  local text="$@"
+  local text="$1"
 
   if [ -n "$WEBHOOK_URL" ]
   then
     # execute webhook requests as background process to prevent healer from blocking
-    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
+    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload "$text")"  "$WEBHOOK_URL"
   fi
 }
 
 # https://towardsdatascience.com/proper-ways-to-pass-environment-variables-in-json-for-curl-post-f797d2698bf3
 generate_webhook_payload() {
-  local text="$@"
+  local text="$1"
   cat <<EOF
 {
   "text":"$text"
