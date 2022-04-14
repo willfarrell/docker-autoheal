@@ -11,7 +11,7 @@ WEBHOOK_URL=${WEBHOOK_URL:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
-  "tcp://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcp://#https://#')"
+  "tcp://"*) HTTP_ENDPOINT="${DOCKER_SOCK//tcp:\/\///https:\/\/}"
              CA="--cacert /certs/ca.pem"
              CLIENT_KEY="--key /certs/client-key.pem"
              CLIENT_CERT="--cert /certs/client-cert.pem"
@@ -25,7 +25,9 @@ AUTOHEAL_CONTAINER_LABEL=${AUTOHEAL_CONTAINER_LABEL:-autoheal}
 AUTOHEAL_START_PERIOD=${AUTOHEAL_START_PERIOD:-0}
 AUTOHEAL_INTERVAL=${AUTOHEAL_INTERVAL:-5}
 AUTOHEAL_DEFAULT_STOP_TIMEOUT=${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}
+AUTOHEAL_START_EXITED_CONTAINERS=${AUTOHEAL_START_EXITED_CONTAINERS:false}
 
+# shellcheck disable=2086
 docker_curl() {
   curl --max-time "${CURL_TIMEOUT}" --no-buffer -s \
   ${CA} ${CLIENT_KEY} ${CLIENT_CERT} \
@@ -45,9 +47,18 @@ get_container_info() {
   else
     label_filter=",\"label\":\[\"${AUTOHEAL_CONTAINER_LABEL}=true\"\]"
   fi
-  url="${HTTP_ENDPOINT}/containers/json?filters=\{\"health\":\[\"unhealthy\"\]${label_filter}\}"
+  url="${HTTP_ENDPOINT}/containers/json?filters=\{$1${label_filter}\}"
   docker_curl "$url"
 }
+
+get_unhealthy_container_info() {
+  get_container_info "\"health\":\[\"unhealthy\"\]"
+}
+
+get_exit_container_info() {
+  get_container_info "\"status\":\[\"exited\"\]"
+}
+
 
 # shellcheck disable=2039
 restart_container() {
@@ -57,19 +68,27 @@ restart_container() {
   docker_curl -f -X POST "${HTTP_ENDPOINT}/containers/${container_id}/restart?t=${timeout}"
 }
 
+# shellcheck disable=2039
+start_container() {
+  local container_id="$1"
+
+  docker_curl -f -X POST "${HTTP_ENDPOINT}/containers/${container_id}/start"
+}
+
+
 notify_webhook() {
-  local text="$@"
+  local text="$1"
 
   if [ -n "$WEBHOOK_URL" ]
   then
     # execute webhook requests as background process to prevent healer from blocking
-    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
+    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload "$text")"  "$WEBHOOK_URL"
   fi
 }
 
 # https://towardsdatascience.com/proper-ways-to-pass-environment-variables-in-json-for-curl-post-f797d2698bf3
 generate_webhook_payload() {
-  local text="$@"
+  local text="$1"
   cat <<EOF
 {
   "text":"$text"
@@ -96,7 +115,7 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
   while true
   do
     STOP_TIMEOUT=".Labels[\"autoheal.stop.timeout\"] // $AUTOHEAL_DEFAULT_STOP_TIMEOUT"
-    get_container_info | \
+    get_unhealthy_container_info | \
       jq -r "foreach .[] as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0], .State, ${STOP_TIMEOUT})" | \
       while read -r CONTAINER_ID && read -r CONTAINER_NAME && read -r CONTAINER_STATE && read -r TIMEOUT
     do
@@ -121,6 +140,33 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         fi
       fi
     done
+
+    if [ "$AUTOHEAL_START_EXITED_CONTAINERS" = "true" ]
+    then
+      get_exit_container_info | \
+        jq -r "foreach .[] as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0])" | \
+        while read -r CONTAINER_ID && read -r CONTAINER_NAME
+      do
+        # shellcheck disable=2039
+        CONTAINER_SHORT_ID=${CONTAINER_ID:0:12}
+        DATE=$(date +%d-%m-%Y" "%H:%M:%S)
+
+        if [ "$CONTAINER_NAME" = "null" ]
+        then
+          echo "$DATE Container name of (${CONTAINER_SHORT_ID}) is null, which implies container does not exist - don't restart" >&2
+        else
+          echo "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be exited - Starting container now"
+          if ! start_container "$CONTAINER_ID"
+          then
+            echo "$DATE Starting container $CONTAINER_SHORT_ID failed" >&2
+            notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be exited. Failed to start the container!" &
+          else
+            notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be exited. Successfully started the container!" &
+          fi
+        fi
+      done
+    fi
+
     sleep "$AUTOHEAL_INTERVAL"
   done
 
