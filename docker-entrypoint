@@ -69,7 +69,7 @@ notify_webhook() {
     curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
   fi
 
-  if [ -n "$GOTIFY_URL" ]
+  if [ -n "$AUTOHEAL_NOTIFICATION_GOTIFY_URL" ]
   then
     # execute gotify request as background process to prevent healer from blocking
     curl -fsS -m 5 --retry 3 -o /dev/null "$AUTOHEAL_NOTIFICATION_GOTIFY_URL/message?token=$AUTOHEAL_NOTIFICATION_GOTIFY_TOKEN" -F "title=$AUTOHEAL_NOTIFICATION_GOTIFY_TITLE" -F "message=$@"
