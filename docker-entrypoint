@@ -90,7 +90,8 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
   if [ "$AUTOHEAL_START_PERIOD" -gt 0 ]
   then
   echo "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)"
-    sleep "$AUTOHEAL_START_PERIOD"
+    sleep "$AUTOHEAL_START_PERIOD" &
+    wait $!
   fi
 
   while true
@@ -121,7 +122,8 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         fi
       fi
     done
-    sleep "$AUTOHEAL_INTERVAL"
+    sleep "$AUTOHEAL_INTERVAL" &
+    wait $!
   done
 
 else
