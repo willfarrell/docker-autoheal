@@ -47,25 +47,26 @@ The certificates, and keys need these names:
 
 ### Change Timezone
 If you need the timezone to match the local machine, you can map the `/etc/localtime` into the container.
-```
+```bash
 docker run ... -v /etc/localtime:/etc/localtime:ro
 ```
 
 
 ## ENV Defaults
-```
+```bash
 AUTOHEAL_CONTAINER_LABEL=autoheal
-AUTOHEAL_INTERVAL=5   # check every 5 seconds
-AUTOHEAL_START_PERIOD=0   # wait 0 seconds before first health check
-AUTOHEAL_DEFAULT_STOP_TIMEOUT=10   # Docker waits max 10 seconds (the Docker default) for a container to stop before killing during restarts (container overridable via label, see below)
-DOCKER_SOCK=/var/run/docker.sock   # Unix socket for curl requests to Docker API
-CURL_TIMEOUT=30     # --max-time seconds for curl requests to Docker API
-WEBHOOK_URL=""    # post message to the webhook if a container was restarted (or restart failed)
+AUTOHEAL_INTERVAL=5                 # check every 5 seconds
+AUTOHEAL_START_PERIOD=0             # wait 0 seconds before first health check
+AUTOHEAL_DEFAULT_STOP_TIMEOUT=10    # Docker waits max 10 seconds (the Docker default) for a container to stop before killing during restarts (container overridable via label, see below)
+AUTOHEAL_RETRIES=5                  # Number of retries pf restarting an unhealthy container
+DOCKER_SOCK=/var/run/docker.sock    # Unix socket for curl requests to Docker API
+CURL_TIMEOUT=30                     # --max-time seconds for curl requests to Docker API
+WEBHOOK_URL=""                      # post message to the webhook if a container was restarted (or restart failed)
 ```
 
 ### Optional Container Labels
-```
-autoheal.stop.timeout=20        # Per containers override for stop timeout seconds during restart
+```bash
+autoheal.stop.timeout=20            # Per containers override for stop timeout seconds during restart
 ```
 
 ## Testing
