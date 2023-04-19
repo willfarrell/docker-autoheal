@@ -13,7 +13,8 @@ ENV AUTOHEAL_CONTAINER_LABEL=autoheal \
     CURL_TIMEOUT=30 \
     WEBHOOK_URL="" \
     WEBHOOK_JSON_KEY="content" \
-    APPRISE_URL=""
+    APPRISE_URL="" \
+    POST_RESTART_SCRIPT=""
 
 HEALTHCHECK --interval=5s CMD pgrep -f autoheal || exit 1
 

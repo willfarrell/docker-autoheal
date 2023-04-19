@@ -1,6 +1,7 @@
 # Docker Autoheal
 
 Monitor and restart unhealthy docker containers.
+Monitor and restart unhealthy docker containers.
 This functionality was proposed to be included with the addition of `HEALTHCHECK`, however didn't make the cut.
 This container is a stand-in till there is native support for `--exit-on-unhealthy` https://github.com/docker/docker/pull/22719.
 
@@ -76,11 +77,29 @@ CURL_TIMEOUT=30     # --max-time seconds for curl requests to Docker API
 WEBHOOK_URL=""    # post message to the webhook if a container was restarted (or restart failed)
 WEBHOOK_JSON_KEY="content"    # the key to use for the message in the json body of the request to the webhook url
 APPRISE_URL=""    # post message to Apprise if a container was restarted (or restart failed)
+POST_RESTART_SCRIPT=""    # Run the specified script if a container was restarted (or restart failed). Script is run from inside the container. Make sure to mount a host directory with the script you want to run. e.g. `-v ./scripts:/scripts`
 ```
 
 ### Optional Container Labels
 ```
 autoheal.stop.timeout=20        # Per containers override for stop timeout seconds during restart
+```
+
+### Post-Restart Script
+
+Here's an example of how you can execute a script after a restart.
+
+The following values are passed as arguments: `CONTAINER_NAME`, `CONTAINER_SHORT_ID`, `CONTAINER_STATE`, `RESTART_TIMEOUT`.
+
+```bash
+docker build -t autoheal .
+
+docker run -d \
+    -e AUTOHEAL_CONTAINER_LABEL=all \
+    -e POST_RESTART_SCRIPT=/scripts/post_restart.sh \
+    -v ./scripts:/scripts \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    autoheal
 ```
 
 ## Testing
@@ -89,6 +108,7 @@ docker build -t autoheal .
 
 docker run -d \
     -e AUTOHEAL_CONTAINER_LABEL=all \
+    -e POST_RESTART_SCRIPT=/scripts/post_restart.sh
     -v /var/run/docker.sock:/var/run/docker.sock \
     autoheal
 ```
