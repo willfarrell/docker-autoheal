@@ -67,13 +67,21 @@ notify_webhook() {
   fi
 }
 
+notify_post_restart_script() {
+  if [ -n "$POST_RESTART_SCRIPT" ]
+  then
+    # execute post restart script as background process to prevent healer from blocking
+    $POST_RESTART_SCRIPT "$@" &
+  fi
+}
+
 # https://towardsdatascience.com/proper-ways-to-pass-environment-variables-in-json-for-curl-post-f797d2698bf3
 generate_webhook_payload() {
   local text="$@"
   cat <<EOF
 {
   "text":"$text"
-} 
+}
 EOF
 }
 
@@ -116,9 +124,10 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         then
           echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
           notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
-        else 
+        else
           notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
         fi
+        notify_post_restart_script "$CONTAINER_NAME" "$CONTAINER_SHORT_ID" "$CONTAINER_STATE" "$TIMEOUT" &
       fi
     done
     sleep "$AUTOHEAL_INTERVAL"
