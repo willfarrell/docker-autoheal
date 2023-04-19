@@ -12,6 +12,7 @@ ENV AUTOHEAL_CONTAINER_LABEL=autoheal \
     DOCKER_SOCK=/var/run/docker.sock \
     CURL_TIMEOUT=30 \
     WEBHOOK_URL="" \
+    WEBHOOK_JSON_KEY="content" \
     APPRISE_URL=""
 
 HEALTHCHECK --interval=5s CMD pgrep -f autoheal || exit 1

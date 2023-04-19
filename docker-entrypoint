@@ -8,6 +8,7 @@ DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 WEBHOOK_URL=${WEBHOOK_URL:-""}
+WEBHOOK_JSON_KEY=${WEBHOOK_JSON_KEY:-"text"}
 APPRISE_URL=${APPRISE_URL:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
@@ -81,8 +82,8 @@ generate_webhook_payload() {
   local text="$@"
   cat <<EOF
 {
-  "content":"$text"
-} 
+  "$WEBHOOK_JSON_KEY":"$text"
+}
 EOF
 }
 
@@ -92,7 +93,7 @@ generate_apprise_payload() {
 {
   "title":"Autoheal",
   "body":"$text"
-} 
+}
 EOF
 }
 
@@ -141,7 +142,7 @@ then
         then
           echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
           notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
-        else 
+        else
           notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
         fi
       fi
