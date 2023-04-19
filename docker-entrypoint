@@ -81,7 +81,7 @@ generate_webhook_payload() {
   local text="$@"
   cat <<EOF
 {
-  "text":"$text"
+  "content":"$text"
 } 
 EOF
 }
