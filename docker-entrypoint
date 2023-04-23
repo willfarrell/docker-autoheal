@@ -134,7 +134,7 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
 
         RETRY_NEW=$((RETRY+1))
-        if [$RETRY_NEW -lt $AUTOHEAL_RETRIES]; then
+        if [ $RETRY_NEW -lt $AUTOHEAL_RETRIES ]; then
           SICK_CONTAINER_NEW="${SICK_CONTAINER/RETRY=$RETRY/RETRY=$RETRY_NEW}"
           SICK_CONTAINERS_NEW[$CONTAINER_ID]="$SICK_CONTAINER_NEW"
         else
