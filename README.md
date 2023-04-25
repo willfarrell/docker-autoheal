@@ -61,6 +61,8 @@ AUTOHEAL_DEFAULT_STOP_TIMEOUT=10   # Docker waits max 10 seconds (the Docker def
 DOCKER_SOCK=/var/run/docker.sock   # Unix socket for curl requests to Docker API
 CURL_TIMEOUT=30     # --max-time seconds for curl requests to Docker API
 WEBHOOK_URL=""    # post message to the webhook if a container was restarted (or restart failed)
+PUSHOVER_USER_KEY=""    # post message with pushover if a container was restarted (or restart failed), needs to be used in conjunction with PUSHOVER_APP_TOKEN
+PUSHOVER_APP_TOKEN=""    # post message with pushover if a container was restarted (or restart failed), needs to be used in conjunction with PUSHOVER_USER_KEY
 ```
 
 ### Optional Container Labels
