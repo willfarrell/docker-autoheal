@@ -61,6 +61,11 @@ AUTOHEAL_DEFAULT_STOP_TIMEOUT=10   # Docker waits max 10 seconds (the Docker def
 DOCKER_SOCK=/var/run/docker.sock   # Unix socket for curl requests to Docker API
 CURL_TIMEOUT=30     # --max-time seconds for curl requests to Docker API
 WEBHOOK_URL=""    # post message to the webhook if a container was restarted (or restart failed)
+
+NTFY_URL=""  # https://docs.ntfy.sh/
+NTFY_TITLE="autoheal alert: unhealthy container"
+NTFY_PRIORITY="urgent"  # https://docs.ntfy.sh/publish/#message-priority
+NTFY_TAGS="skull,rotating_light,warning"  # https://docs.ntfy.sh/emojis/
 ```
 
 ### Optional Container Labels

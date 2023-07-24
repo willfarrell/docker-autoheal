@@ -9,6 +9,12 @@ UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 WEBHOOK_URL=${WEBHOOK_URL:-""}
 
+NTFY_URL=${NTFY_URL:-""}
+NTFY_TITLE=${NTFY_TITLE:-"autoheal alert: unhealthy container"}
+NTFY_PRIORITY=${NTFY_PRIORITY:-"urgent"}  # https://docs.ntfy.sh/publish/#message-priority
+NTFY_TAGS=${NTFY_TAGS:-"skull,rotating_light,warning"}  # https://docs.ntfy.sh/emojis/
+
+
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
   "tcp://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcp://#https://#')"
@@ -67,6 +73,21 @@ notify_webhook() {
   fi
 }
 
+ntfy_webhook() {
+  local text="$@"
+
+  if [ -n "$NTFY_URL" ]
+  then
+    # execute webhook requests as background process to prevent healer from blocking
+    curl -X POST \
+      -H "Title: $NTFY_TITLE" \
+      -H "Priority: $NTFY_PRIORITY" \
+      -H "Tags: $NTFY_TAGS" \
+      -d "$text" \
+      $NTFY_URL
+  fi
+}
+
 # https://towardsdatascience.com/proper-ways-to-pass-environment-variables-in-json-for-curl-post-f797d2698bf3
 generate_webhook_payload() {
   local text="$@"
@@ -116,8 +137,10 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         then
           echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
           notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
-        else 
+          ntfy_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
+        else
           notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
+          ntfy_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
         fi
       fi
     done
