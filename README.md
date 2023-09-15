@@ -5,9 +5,7 @@ This functionality was proposed to be included with the addition of `HEALTHCHECK
 This container is a stand-in till there is native support for `--exit-on-unhealthy` https://github.com/docker/docker/pull/22719.
 
 ## Supported tags and Dockerfile links
-- [`latest` (*Dockerfile*)](https://github.com/infra7ti/docker-autoheal/blob/main/autoheal.dockerfile) - Built daily
-- [`1.1.0` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/1.1.0/Dockerfile)
-- [`v0.7.0` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/v0.7.0/Dockerfile)
+- [`latest` (*Dockerfile*)](https://github.com/infra7ti/docker-autoheal/blob/main/Dockerfile) - Built manually for now
 
 ![](https://img.shields.io/docker/pulls/infra7/autoheal "Total docker pulls") [![](https://images.microbadger.com/badges/image/infra7/autoheal.svg)](http://microbadger.com/images/infra7/autoheal "Docker layer breakdown")
 
@@ -77,6 +75,7 @@ services:
       file: ${PWD}/services.yml
       service: app
     labels:
+      autoheal: true
       autoheal-app: true
 
   autoheal:
@@ -109,7 +108,7 @@ services:
 
 ## Testing
 ```bash
-docker build -t autoheal .
+docker buildx build -t autoheal .
 
 docker run -d \
     -e AUTOHEAL_CONTAINER_LABEL=all \
