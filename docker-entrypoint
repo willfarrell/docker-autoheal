@@ -7,9 +7,11 @@ set -o pipefail
 DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
-WEBHOOK_URL=${WEBHOOK_URL:-""}
 WEBHOOK_JSON_KEY=${WEBHOOK_JSON_KEY:-"text"}
 APPRISE_URL=${APPRISE_URL:-""}
+AUTOHEAL_NOTIFICATION_GOTIFY_URL=${AUTOHEAL_NOTIFICATION_GOTIFY_URL:-""}
+AUTOHEAL_NOTIFICATION_GOTIFY_TOKEN=${AUTOHEAL_NOTIFICATION_GOTIFY_TOKEN:-""}
+AUTOHEAL_NOTIFICATION_GOTIFY_TITLE=${AUTOHEAL_NOTIFICATION_GOTIFY_TITLE:-"Docker Autoheal"}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
@@ -82,6 +84,12 @@ notify_post_restart_script() {
   then
     # execute post restart script as background process to prevent healer from blocking
     $POST_RESTART_SCRIPT "$@" &
+  fi
+
+  if [ -n "$AUTOHEAL_NOTIFICATION_GOTIFY_URL" ]
+  then
+    # execute gotify request as background process to prevent healer from blocking
+    curl -fsS -m 5 --retry 3 -o /dev/null "$AUTOHEAL_NOTIFICATION_GOTIFY_URL/message?token=$AUTOHEAL_NOTIFICATION_GOTIFY_TOKEN" -F "title=$AUTOHEAL_NOTIFICATION_GOTIFY_TITLE" -F "message=$@"
   fi
 }
 
