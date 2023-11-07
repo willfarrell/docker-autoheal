@@ -8,10 +8,14 @@ DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 WEBHOOK_URL=${WEBHOOK_URL:-""}
+WEBHOOK_JSON_KEY=${WEBHOOK_JSON_KEY:-"text"}
+APPRISE_URL=${APPRISE_URL:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
-  "tcp://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcp://#https://#')"
+  "tcp://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcp://#http://#')"
+             ;;
+  "tcps://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcps://#https://#')"
              CA="--cacert /certs/ca.pem"
              CLIENT_KEY="--key /certs/client-key.pem"
              CLIENT_CERT="--cert /certs/client-cert.pem"
@@ -63,7 +67,21 @@ notify_webhook() {
   if [ -n "$WEBHOOK_URL" ]
   then
     # execute webhook requests as background process to prevent healer from blocking
-    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
+    curl -s -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
+  fi
+
+  if [ -n "$APPRISE_URL" ]
+  then
+    # execute webhook requests as background process to prevent healer from blocking
+    curl -s -X POST -H "Content-type: application/json" -d "$(generate_apprise_payload $text)"  $APPRISE_URL
+  fi
+}
+
+notify_post_restart_script() {
+  if [ -n "$POST_RESTART_SCRIPT" ]
+  then
+    # execute post restart script as background process to prevent healer from blocking
+    $POST_RESTART_SCRIPT "$@" &
   fi
 }
 
@@ -72,8 +90,18 @@ generate_webhook_payload() {
   local text="$@"
   cat <<EOF
 {
-  "text":"$text"
-} 
+  "$WEBHOOK_JSON_KEY":"$text"
+}
+EOF
+}
+
+generate_apprise_payload() {
+  local text="$@"
+  cat <<EOF
+{
+  "title":"Autoheal",
+  "body":"$text"
+}
 EOF
 }
 
@@ -85,19 +113,26 @@ term_handler() {
 # shellcheck disable=2039
 trap 'kill $$; term_handler' SIGTERM
 
-if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
+if [ "$1" = "autoheal" ]
+then
+  if [ -n "$UNIX_SOCK" ] && ! [ -S "$DOCKER_SOCK" ]
+  then
+    echo "unix socket is currently not available" >&2
+    exit 1
+  fi
   # Delayed startup
   if [ "$AUTOHEAL_START_PERIOD" -gt 0 ]
   then
   echo "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)"
-    sleep "$AUTOHEAL_START_PERIOD"
+    sleep "$AUTOHEAL_START_PERIOD" &
+    wait $!
   fi
 
   while true
   do
     STOP_TIMEOUT=".Labels[\"autoheal.stop.timeout\"] // $AUTOHEAL_DEFAULT_STOP_TIMEOUT"
     get_container_info | \
-      jq -r "foreach .[] as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0], .State, ${STOP_TIMEOUT})" | \
+      jq -r ".[] | select(.Labels[\"autoheal\"] != \"False\") | foreach . as \$CONTAINER([];[]; \$CONTAINER | .Id, .Names[0], .State, ${STOP_TIMEOUT})" | \
       while read -r CONTAINER_ID && read -r CONTAINER_NAME && read -r CONTAINER_STATE && read -r TIMEOUT
     do
       # shellcheck disable=2039
@@ -116,12 +151,14 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         then
           echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
           notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
-        else 
+        else
           notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
         fi
+        notify_post_restart_script "$CONTAINER_NAME" "$CONTAINER_SHORT_ID" "$CONTAINER_STATE" "$TIMEOUT" &
       fi
     done
-    sleep "$AUTOHEAL_INTERVAL"
+    sleep "$AUTOHEAL_INTERVAL" &
+    wait $!
   done
 
 else
