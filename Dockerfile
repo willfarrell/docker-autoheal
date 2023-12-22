@@ -12,6 +12,7 @@ ENV AUTOHEAL_CONTAINER_LABEL=autoheal \
     AUTOHEAL_DEFAULT_STOP_TIMEOUT=10 \
     DOCKER_SOCK=/var/run/docker.sock \
     CURL_TIMEOUT=30 \
+    EXTERNAL_HOSTNAME="" \
     WEBHOOK_URL="" \
     WEBHOOK_JSON_KEY="content" \
     APPRISE_URL="" \
