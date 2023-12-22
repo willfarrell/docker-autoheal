@@ -52,6 +52,7 @@ services:
     environment:
       AUTOHEAL_CONTAINER_LABEL: "${AUTOHEAL_CONTAINER_LABEL:-all}"
       AUTOHEAL_INTERVAL: "10"
+      EXTERNAL_HOSTNAME: "${EXTERNAL_HOSTNAME:-}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
     network_mode: none
