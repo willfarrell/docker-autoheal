@@ -61,6 +61,7 @@ AUTOHEAL_DEFAULT_STOP_TIMEOUT=10   # Docker waits max 10 seconds (the Docker def
 DOCKER_SOCK=/var/run/docker.sock   # Unix socket for curl requests to Docker API
 CURL_TIMEOUT=30     # --max-time seconds for curl requests to Docker API
 WEBHOOK_URL=""    # post message to the webhook if a container was restarted (or restart failed)
+EXTERNAL_HOSTNAME="" # pass the hostname to the healthcheck script. This is useful when using multiple docker servers.
 ```
 
 ### Optional Container Labels
