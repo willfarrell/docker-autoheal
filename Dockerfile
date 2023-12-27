@@ -4,7 +4,15 @@ ARG ALPINE_VERSION=3.18
 
 FROM alpine:${ALPINE_VERSION}
 
-RUN apk add --no-cache curl jq
+RUN apk update --no-cache --no-progress --quiet \
+    && apk upgrade --no-cache --no-progress --purge --quiet \
+    && apk add --upgrade --no-cache --no-progress --purge --quiet \
+    curl \
+    jq \
+    && apk cache --quiet purge \
+    && rm -rf \
+    /tmp/* \
+    /var/tmp/*
 
 ENV AUTOHEAL_CONTAINER_LABEL=autoheal \
     AUTOHEAL_START_PERIOD=0 \
