@@ -2,6 +2,11 @@ name: build
 
 on:
   push:
+    paths-ignore:
+      - '.github/**'
+      - '*.md'
+      - '.*'
+      - '.LICENSE'
     branches:
       - main
     tags:
