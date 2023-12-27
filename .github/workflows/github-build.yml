@@ -9,6 +9,11 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+env:
+  ## Build args
+  BUILD_ARGS: |
+    "ALPINE_VERSION=${{ vars.ALPINE_VERSION }}"
+    
 jobs:
   multi:
     runs-on: ubuntu-latest
