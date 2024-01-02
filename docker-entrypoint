@@ -13,9 +13,9 @@ APPRISE_URL=${APPRISE_URL:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
-  "tcp://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcp://#http://#')"
+  "tcp://"*) HTTP_ENDPOINT="$(echo "${DOCKER_SOCK}" | sed 's#tcp://#http://#')"
              ;;
-  "tcps://"*) HTTP_ENDPOINT="$(echo ${DOCKER_SOCK} | sed 's#tcps://#https://#')"
+  "tcps://"*) HTTP_ENDPOINT="$(echo "${DOCKER_SOCK}" | sed 's#tcps://#https://#')"
              CA="--cacert /certs/ca.pem"
              CLIENT_KEY="--key /certs/client-key.pem"
              CLIENT_CERT="--cert /certs/client-cert.pem"
@@ -67,13 +67,13 @@ notify_webhook() {
   if [ -n "$WEBHOOK_URL" ]
   then
     # execute webhook requests as background process to prevent healer from blocking
-    curl -s -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
+    curl -s -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  "$WEBHOOK_URL"
   fi
 
   if [ -n "$APPRISE_URL" ]
   then
     # execute webhook requests as background process to prevent healer from blocking
-    curl -s -X POST -H "Content-type: application/json" -d "$(generate_apprise_payload $text)"  $APPRISE_URL
+    curl -s -X POST -H "Content-type: application/json" -d "$(generate_apprise_payload $text)"  "$APPRISE_URL"
   fi
 }
 
