@@ -65,8 +65,8 @@ docker run ... -v /etc/localtime:/etc/localtime:ro
 ### 2. Use in your container image
 Choose one of the three alternatives:
 
-a) Apply the label `autoheal=true` to your container to have it watched;<br/>
-b) Set ENV `AUTOHEAL_CONTAINER_LABEL=all` to watch all running containers;<br/>
+a) Apply the label `autoheal="true"` to your container to have it watched;<br/>
+b) Set ENV `AUTOHEAL_CONTAINER_LABEL="all"` to watch all running containers;<br/>
 c) Set ENV `AUTOHEAL_CONTAINER_LABEL` to existing container label that has the value `"true"` (true must be in quotes or it will be interpreted as the boolean True, which won't work);<br/>
 
 > Note: You must apply `HEALTHCHECK` to your docker images first.<br/>
@@ -86,9 +86,9 @@ services:
     deploy:
       replicas: 1
     environment:
-      AUTOHEAL_CONTAINER_LABEL: autoheal-app
+      AUTOHEAL_CONTAINER_LABEL: "autoheal-app"
     image: willfarrell/autoheal:latest
-    network_mode: none
+    network_mode: "none"
     restart: always
     volumes:
       - /etc/localtime:/etc/localtime:ro
