@@ -8,7 +8,7 @@ DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 WEBHOOK_URL=${WEBHOOK_URL:-""}
-WEBHOOK_JSON_KEY=${WEBHOOK_JSON_KEY:-"text"}
+WEBHOOK_JSON_ENTRY=${WEBHOOK_JSON_ENTRY:-"text"}
 APPRISE_URL=${APPRISE_URL:-""}
 
 # only use unix domain socket if no TCP endpoint is defined
@@ -104,7 +104,7 @@ generate_webhook_payload() {
   local text="$@"
   cat <<EOF
 {
-  "$WEBHOOK_JSON_KEY":"$text"
+  "$WEBHOOK_JSON_ENTRY":"$text"
 }
 EOF
 }
