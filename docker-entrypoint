@@ -129,7 +129,7 @@ trap 'kill $$; term_handler' SIGTERM
 
 if [ "$1" = "autoheal" ]
 then
-  if [ -n "$UNIX_SOCK" ] && ! [ -S "$DOCKER_SOCK" ]
+  if [[ -n "$UNIX_SOCK" && ( ! -S "$DOCKER_SOCK" || ! -w "$DOCKER_SOCK" ) ]]; then
   then
     echo "unix socket is currently not available" >&2
     exit 1
