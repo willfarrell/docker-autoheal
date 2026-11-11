@@ -38,13 +38,47 @@ jobs:
         name: Conditional(Set tag as `{version}`)
         run: echo "tag=willfarrell/autoheal:${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
+      - if: github.event_name == 'schedule'
+        name: Check whether the nightly image should be published
+        env:
+          ALPINE_VERSION: '3.18'
+        run: |
+          set -euo pipefail
+
+          repo_fingerprint="$(sha256sum Dockerfile docker-entrypoint 2>/dev/null | sha256sum | cut -d' ' -f1)"
+          alpine_digest="$(docker buildx imagetools inspect alpine:${ALPINE_VERSION} --format '{{json .Manifest.Digest}}' | tr -d '"')"
+          current_fingerprint="$(printf '%s\n%s\n' "${alpine_digest}" "${repo_fingerprint}" | sha256sum | cut -d' ' -f1)"
+
+          remote_fingerprint=""
+          if docker buildx imagetools inspect "${tag}" >/dev/null 2>&1; then
+            remote_fingerprint="$(docker buildx imagetools inspect "${tag}" --format '{{ index .Manifest.Config.Labels "autoheal.build-fingerprint" }}' 2>/dev/null || true)"
+          fi
+
+          echo "current_fingerprint=${current_fingerprint}" >> $GITHUB_ENV
+          echo "remote_fingerprint=${remote_fingerprint}" >> $GITHUB_ENV
+
+          if [ "${remote_fingerprint}" = "${current_fingerprint}" ]; then
+            echo "should_publish=false" >> $GITHUB_ENV
+            echo "No Docker base image or repo changes detected; skipping nightly publish."
+          else
+            echo "should_publish=true" >> $GITHUB_ENV
+            echo "Detected an upstream or repo change; nightly publish allowed."
+          fi
+
+      - if: github.event_name == 'schedule' && env.should_publish != 'true'
+        name: Skip nightly publish
+        run: echo "Skipping nightly publish because the base image, installed packages, and repo contents are unchanged."
+
       -
         name: Build and push
+        if: github.event_name != 'schedule' || env.should_publish == 'true'
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./Dockerfile
           push: true
+          labels: |
+            autoheal.build-fingerprint=${{ env.current_fingerprint }}
           platforms: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le
           tags: |
             ${{ env.tag }}
